@@ -13,11 +13,6 @@ fun AnalisisScreen() {
 }
 
 @Composable
-fun DependenciaScreen() {
-    Text("🏢 Vista de Dependencias", modifier = Modifier.padding(24.dp))
-}
-
-@Composable
 fun CargaConsumosScreen() {
     Text("⚡ Vista de Carga de Consumos", modifier = Modifier.padding(24.dp))
 }

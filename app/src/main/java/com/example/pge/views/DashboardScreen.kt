@@ -3,7 +3,6 @@ package com.example.pge.views
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Bolt
@@ -24,9 +23,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import java.text.NumberFormat
 import java.util.*
 
@@ -35,38 +33,34 @@ data class Inmueble(val nombre: String, val consumo: String)
 
 // --- Composable Principal ---
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(navController: NavController, onMenuClick: () -> Unit) {
     // Controla si el menú desplegable está abierto
-    var showMenu by remember { mutableStateOf(false) }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        // --- Contenido principal del Dashboard ---
+    var showDrawer by remember { mutableStateOf(false) }
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Dashboard: Secretaría de Finanzas",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    // 🔘 Botón para abrir el menú desplegable
-                    IconButton(onClick = { showMenu = true }) {
+                    IconButton(onClick = { onMenuClick() }) {
                         Icon(
                             imageVector = Icons.Default.Menu,
                             contentDescription = "Abrir menú",
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
+                    Text(
+                        text = "Secretaría de Finanzas",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -120,28 +114,13 @@ fun DashboardScreen() {
                     )
                 )
             }
-        }
 
-        // --- Capa del menú sobrepuesta ---
-        if (showMenu) {
-            Surface(
-                color = Color.Black.copy(alpha = 0.4f), // Efecto de oscurecimiento
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { showMenu = false } // Cierra al hacer click fuera
-            ) {}
-
-            // Vista del menú superpuesta
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-               DrawerScreen(onClose = { showMenu = false })
-            }
         }
-    }
+    DrawerOverlay(
+        navController = navController,
+        showDrawer = showDrawer,
+        onClose = { showDrawer = false }
+    )
 }
 
 
@@ -348,12 +327,24 @@ fun TopConsumptionCard(inmuebles: List<Inmueble>) {
     }
 }
 
-
-// --- Preview para ver el diseño en Android Studio ---
-@Preview(showBackground = true)
 @Composable
-fun DashboardScreenPreview() {
-    MaterialTheme {
-        DashboardScreen()
+fun DrawerOverlay(navController: NavController, showDrawer: Boolean, onClose: () -> Unit) {
+    if (showDrawer) {
+        Surface(
+            color = Color.Black.copy(alpha = 0.4f),
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable { onClose() }
+        ) {}
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            DrawerScreen(navController = navController, showDrawer = showDrawer, onClose = onClose)
+        }
     }
 }
+
