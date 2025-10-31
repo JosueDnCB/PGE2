@@ -1,5 +1,7 @@
 package com.example.pge
 
+
+import AnalisisDashboardScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,7 +19,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.PGETheme
-import com.example.pge.views.AnalisisScreen
 import com.example.pge.views.CargaConsumosScreen
 import com.example.pge.views.DashboardScreen
 import com.example.pge.views.Dependencia
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
                             composable(NavRoutes.Dashboard.route) {
                                 DashboardScreen(navController) { showDrawer = true }
                             }
-                            composable(NavRoutes.Analisis.route) { AnalisisScreen() }
+                            composable(NavRoutes.Analisis.route) { AnalisisDashboardScreen(navController) { showDrawer = true } }
                             composable(NavRoutes.Dependencias.route) {
                                 DependenciasScreen(
                                     navController,
