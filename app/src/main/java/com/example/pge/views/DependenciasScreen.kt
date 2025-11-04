@@ -49,7 +49,6 @@ data class Dependencia(
     val nombre: String,
     val categoria: String,
     val numEdificios: Int,
-    val descripcion : String
 )
 
 
@@ -164,21 +163,10 @@ fun DependenciasScreen(navController: NavController, dependencias: List<Dependen
                                             .background(Color(0xFFF5F5F5))
                                             .padding(8.dp)
                                     ) {
-                                        Text(
-                                            text = "Descripción:",
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                        Text(
-                                            text = dependencia.descripcion,
-                                            style = MaterialTheme.typography.bodyMedium
-                                        )
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            text = "Última actualización: 2025-10-30",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = Color.Gray
-                                        )
+                                        Row {
+                                            Text("Edificios: ${dependencia.numEdificios}", Modifier.weight(0.4f))
+                                            Spacer(Modifier.height(4.dp))
+                                        }
                                     }
                                 }
                                 Divider(modifier = Modifier.padding(vertical = 4.dp))

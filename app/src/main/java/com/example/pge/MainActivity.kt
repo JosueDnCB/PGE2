@@ -51,11 +51,10 @@ class MainActivity : ComponentActivity() {
                                 DependenciasScreen(
                                     navController,
                                     listOf<Dependencia>(
-                                        Dependencia("Secretaría de Finanzas", "Administrativa", 8, ""),
-                                        Dependencia("Secretaría de Educación", "Educativa", 12, ""),
-                                        Dependencia("Secretaría de Salud", "Salud", 6, ""),
-                                        Dependencia("Secretaría de Infraestructura", "Obras", 10, ""
-                                        )
+                                        Dependencia("Secretaría de Finanzas", "Administrativa", 8),
+                                        Dependencia("Secretaría de Educación", "Educativa", 12),
+                                        Dependencia("Secretaría de Salud", "Salud", 6),
+                                        Dependencia("Secretaría de Infraestructura", "Obras", 10)
                                     ), { showDrawer = true }
                                 )
                             }
