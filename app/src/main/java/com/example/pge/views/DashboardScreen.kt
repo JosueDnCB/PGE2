@@ -265,6 +265,7 @@ fun TopConsumptionCard(inmuebles: List<Inmueble>) {
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(16.dp))
+
             // Encabezados de la tabla
             Row(modifier = Modifier.fillMaxWidth()) {
                 Text(

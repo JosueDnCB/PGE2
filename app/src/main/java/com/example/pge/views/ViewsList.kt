@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun AnalisisScreen() {
+fun AnalisisDashboardScreen() {
     Text("📊 Vista de Análisis", modifier = Modifier.padding(24.dp))
 }
 
