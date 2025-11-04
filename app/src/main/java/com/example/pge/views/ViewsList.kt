@@ -7,11 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PresupuestosScreen() {
-    Text("💰 Vista de Presupuestos", modifier = Modifier.padding(24.dp))
-}
-
-@Composable
 fun UsuariosScreen() {
     Text("👥 Vista de Usuarios", modifier = Modifier.padding(24.dp))
 }

@@ -20,7 +20,7 @@ import com.example.pge.views.DashboardScreen
 import com.example.pge.views.Dependencia
 import com.example.pge.views.DependenciasScreen
 import com.example.pge.views.DrawerScreen
-import com.example.pge.views.PresupuestosScreen
+import com.example.pge.views.PresupuestoScreen
 import com.example.pge.views.UsuariosScreen
 
 class MainActivity : ComponentActivity() {
@@ -54,8 +54,8 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable(NavRoutes.CargaConsumos.route) { CargaConsumosScreen(navController) }
-                            composable(NavRoutes.Presupuestos.route) { PresupuestosScreen() }
-                            composable(NavRoutes.Usuarios.route) { UsuariosScreen() }
+                            composable(NavRoutes.Presupuestos.route) {PresupuestoScreen(navController)}
+                            composable(NavRoutes.Usuarios.route) {UsuariosScreen() }
                         }
                     }
                 }
