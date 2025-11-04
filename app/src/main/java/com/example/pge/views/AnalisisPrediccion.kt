@@ -89,66 +89,101 @@ fun FiltrosCard() {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp) // 3. Espacio entre ellos
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = "Rango de Fechas"
+                )
+                Text(
+                    text = "Rango de Fechas",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             // Dropdown de Rango de Fechas
             DropdownFiltro(
-                label = "Rango de Fechas",
-                icono = { Icon(Icons.Default.CalendarMonth, contentDescription = "Rango de Fechas") },
                 opciones = listOf("Últimos 12 meses", "Últimos 6 meses", "Último mes")
             )
-
-            // Dropdown de Dependencia
+            Text(
+                text = "Dependencia",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
             DropdownFiltro(
-                label = "Dependencia",
                 opciones = listOf("Secretaría de Finanzas", "Secretaría de Educación", "Secretaría de Salud")
             )
-
+            Text(
+                text = "Presupuestos",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
             // Dropdown de Categoría
             DropdownFiltro(
-                label = "Categoría",
                 opciones = listOf("Todas las Categorías", "Categoría A", "Categoría B")
             )
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownFiltro(
-    label: String,
     opciones: List<String>,
-    icono: @Composable (() -> Unit)? = null
+    modifier: Modifier = Modifier,
+    label: String? = null, // <-- AQUI LA CLAVE: '?' y '= null' lo hacen opcional
+    icono: @Composable (() -> Unit)? = null // <-- El ícono también es opcional
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf(opciones[0]) }
+    // 1. Estado para saber si el menú está expandido o no
+    var isExpanded by remember { mutableStateOf(false) }
 
+    // 2. Estado para guardar la opción seleccionada
+    var selectedOption by remember {
+        mutableStateOf(opciones.getOrNull(0) ?: "")
+    }
+
+    // 3. El contenedor principal del menú dropdown
     ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
+        expanded = isExpanded,
+        onExpandedChange = { isExpanded = !isExpanded },
+        modifier = modifier
     ) {
+
+        // 4. El campo de texto que muestra la selección
         OutlinedTextField(
+
+            value = selectedOption,
+            onValueChange = {}, // Vacío porque es de solo lectura
+            readOnly = true,
+            // --- Lógica del Label ---
+            // Si el label NO es nulo, lo mostramos.
+            label = label?.let { { Text(text = it) } },
+            leadingIcon = icono,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
+            },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(), // Importante para anclar el menú
-            readOnly = true,
-            value = selectedOptionText,
-            onValueChange = {},
-            label = { Text(label) },
-            leadingIcon = icono,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+
         )
+
+
+        // 5. El menú que se despliega
         ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false }
         ) {
-            opciones.forEach { selectionOption ->
+            opciones.forEach { opcion ->
                 DropdownMenuItem(
-                    text = { Text(selectionOption) },
+                    text = { Text(text = opcion) },
                     onClick = {
-                        selectedOptionText = selectionOption
-                        expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                        selectedOption = opcion
+                        isExpanded = false
+                    }
                 )
             }
         }
