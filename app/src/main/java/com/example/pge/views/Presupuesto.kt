@@ -119,12 +119,19 @@ fun HeaderSection() {
             valueStyle = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.weight(1f)
         )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(){
+
         SummaryCard(
             title = "Dependencias",
             value = "5",
             valueStyle = MaterialTheme.typography.headlineMedium, // Más grande
             modifier = Modifier.weight(1f)
         )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    Row(){
         SummaryCard(
             title = "Promedio por Dependencia",
             value = "$5,420,000",
@@ -182,9 +189,11 @@ fun ListaPresupuestosCard(presupuestos: List<Presupuesto>) {
             // --- Filas de la Lista ---
             // Usamos un Column normal porque ya estamos dentro de un LazyColumn
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
                 presupuestos.forEach { presupuesto ->
                     PresupuestoItemRow(presupuesto)
-                }
+                 }
+
             }
         }
     }
@@ -247,10 +256,18 @@ fun PresupuestoItemRow(presupuesto: Presupuesto) {
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { /* Acción Editar */ }) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar", modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Edit, contentDescription = "Editar",
+                    modifier = Modifier.size(20.dp)
+                )
             }
             IconButton(onClick = { /* Acción Eliminar */ }) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Eliminar",
+                    tint = Color.Red,
+                    modifier = Modifier.size(20.dp)
+                )
+
             }
         }
     }
