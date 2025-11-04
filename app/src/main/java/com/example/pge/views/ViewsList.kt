@@ -6,17 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-
-@Composable
-fun AnalisisDashboardScreen() {
-    Text("📊 Vista de Análisis", modifier = Modifier.padding(24.dp))
-}
-
-@Composable
-fun CargaConsumosScreen() {
-    Text("⚡ Vista de Carga de Consumos", modifier = Modifier.padding(24.dp))
-}
-
 @Composable
 fun PresupuestosScreen() {
     Text("💰 Vista de Presupuestos", modifier = Modifier.padding(24.dp))

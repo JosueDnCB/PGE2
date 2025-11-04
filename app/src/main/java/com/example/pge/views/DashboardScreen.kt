@@ -1,21 +1,13 @@
 package com.example.pge.views
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Savings
-
-
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -33,98 +25,81 @@ data class Inmueble(val nombre: String, val consumo: String)
 
 // --- Composable Principal ---
 @Composable
-fun DashboardScreen(navController: NavController, onMenuClick: () -> Unit) {
-    // Controla si el menú desplegable está abierto
-    var showDrawer by remember { mutableStateOf(false) }
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+fun DashboardScreen(navController: NavController) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
 
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = { onMenuClick() }) {
-                        Icon(
-                            imageVector = Icons.Default.Menu,
-                            contentDescription = "Abrir menú",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Text(
-                        text = "Secretaría de Finanzas",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            // --- Resto de tus tarjetas ---
-            item {
-                InfoCard(
-                    title = "Consumo del Mes (kWh)",
-                    value = "150,230 kWh",
-                    change = "▲ 5.2% vs Mes Anterior",
-                    changeColor = Color(0xFF388E3C),
-                    icon = Icons.Default.Bolt
-                )
-            }
-            item {
-                InfoCard(
-                    title = "Costo del Mes (MXN)",
-                    value = "$285,437.00",
-                    change = "▼ 2.1% vs Mes Anterior",
-                    changeColor = Color(0xFFD32F2F),
-                    icon = Icons.Default.AttachMoney
-                )
-            }
-            item {
-                BudgetCard(
-                    title = "Uso del Presupuesto (Q4)",
-                    usedAmount = 2.25f,
-                    totalAmount = 3.00f
-                )
-            }
-            item {
-                InfoCard(
-                    title = "Ahorro vs Mismo Mes Año Anterior",
-                    value = "$30,150.00",
-                    change = "(Octubre 2024)",
-                    changeColor = Color.Gray,
-                    icon = Icons.Default.Savings
-                )
-            }
-            item {
-                EvolutionChartCard()
-            }
-            item {
-                TopConsumptionCard(
-                    inmuebles = listOf(
-                        Inmueble("Edificio Central", "25,120 kWh"),
-                        Inmueble("Oficinas Zona Norte", "22,500 kWh"),
-                        Inmueble("Archivo General", "18,900 kWh"),
-                        Inmueble("Bodega Principal", "15,340 kWh")
-                    )
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Secretaría de Finanzas",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
         }
-    DrawerOverlay(
-        navController = navController,
-        showDrawer = showDrawer,
-        onClose = { showDrawer = false }
-    )
+
+        // --- Resto de tus tarjetas ---
+        item {
+            InfoCard(
+                title = "Consumo del Mes (kWh)",
+                value = "150,230 kWh",
+                change = "▲ 5.2% vs Mes Anterior",
+                changeColor = Color(0xFF388E3C),
+                icon = Icons.Default.Bolt
+            )
+        }
+        item {
+            InfoCard(
+                title = "Costo del Mes (MXN)",
+                value = "$285,437.00",
+                change = "▼ 2.1% vs Mes Anterior",
+                changeColor = Color(0xFFD32F2F),
+                icon = Icons.Default.AttachMoney
+            )
+        }
+        item {
+            BudgetCard(
+                title = "Uso del Presupuesto (Q4)",
+                usedAmount = 2.25f,
+                totalAmount = 3.00f
+            )
+        }
+        item {
+            InfoCard(
+                title = "Ahorro vs Mismo Mes Año Anterior",
+                value = "$30,150.00",
+                change = "(Octubre 2024)",
+                changeColor = Color.Gray,
+                icon = Icons.Default.Savings
+            )
+        }
+        item {
+            EvolutionChartCard()
+        }
+        item {
+            TopConsumptionCard(
+                inmuebles = listOf(
+                    Inmueble("Edificio Central", "25,120 kWh"),
+                    Inmueble("Oficinas Zona Norte", "22,500 kWh"),
+                    Inmueble("Archivo General", "18,900 kWh"),
+                    Inmueble("Bodega Principal", "15,340 kWh")
+                )
+            )
+        }
+
+    }
 }
-
-
-// --- Componentes Reutilizables ---
 
 @Composable
 fun InfoCard(
@@ -327,25 +302,3 @@ fun TopConsumptionCard(inmuebles: List<Inmueble>) {
         }
     }
 }
-
-@Composable
-fun DrawerOverlay(navController: NavController, showDrawer: Boolean, onClose: () -> Unit) {
-    if (showDrawer) {
-        Surface(
-            color = Color.Black.copy(alpha = 0.4f),
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable { onClose() }
-        ) {}
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            DrawerScreen(navController = navController, showDrawer = showDrawer, onClose = onClose)
-        }
-    }
-}
-
