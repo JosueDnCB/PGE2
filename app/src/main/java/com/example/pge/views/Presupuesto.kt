@@ -21,10 +21,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import java.text.NumberFormat
 import java.util.Locale
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 
 
 data class Presupuesto(
@@ -188,13 +191,15 @@ fun ListaPresupuestosCard(presupuestos: List<Presupuesto>) {
 
             // --- Filas de la Lista ---
             // Usamos un Column normal porque ya estamos dentro de un LazyColumn
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                presupuestos.forEach { presupuesto ->
-                    PresupuestoItemRow(presupuesto)
-                 }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
 
-            }
+                    presupuestos.forEach { presupuesto ->
+                        PresupuestoItemRow(presupuesto)
+                    }
+
+                }
+
         }
     }
 }
@@ -206,10 +211,10 @@ fun PresupuestoListHeader() {
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text("Dependencia", Modifier.weight(2.5f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Año", Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Trimestre", Modifier.weight(2f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Monto", Modifier.weight(1.5f), style = MaterialTheme.typography.labelSmall, color = Color.Gray, textAlign = TextAlign.End)
+        Text("Dependencia", Modifier.weight(3f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Text("Año", Modifier.weight(2f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Text("Trimestre", Modifier.weight(4.5f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Text("Monto Asignado", Modifier.weight(3f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
         Text("Acciones", Modifier.weight(1.5f), style = MaterialTheme.typography.labelSmall, color = Color.Gray, textAlign = TextAlign.End)
     }
 }
@@ -218,60 +223,48 @@ fun PresupuestoListHeader() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PresupuestoItemRow(presupuesto: Presupuesto) {
-    // Formateador de moneda
     val format = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()) //desplazamiento horizontal
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Dependencia
-        Text(presupuesto.dependencia, Modifier.weight(2.5f), style = MaterialTheme.typography.bodyMedium)
+        Text(presupuesto.dependencia, Modifier.width(200.dp), style = MaterialTheme.typography.bodyMedium)
 
-        // Año
-        Text(presupuesto.anio, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+        Text(presupuesto.anio, Modifier.width(100.dp), style = MaterialTheme.typography.bodyMedium)
 
-        // Trimestre
-        Box(modifier = Modifier.weight(2f)) {
+        Box(modifier = Modifier.width(150.dp)) {
             AssistChip(
-                onClick = { /* Sin acción */ },
+                onClick = { },
                 label = { Text(presupuesto.trimestre, style = MaterialTheme.typography.labelMedium) }
             )
         }
 
-        // Monto
         Text(
             text = format.format(presupuesto.monto),
-            Modifier.weight(1.5f),
-            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.width(150.dp),
             textAlign = TextAlign.End,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyMedium
         )
 
-        // Acciones (Iconos)
         Row(
-            modifier = Modifier.weight(1.5f),
+            modifier = Modifier.width(120.dp),
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = { /* Acción Editar */ }) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar",
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.Edit, contentDescription = "Editar", modifier = Modifier.size(20.dp))
             }
             IconButton(onClick = { /* Acción Eliminar */ }) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Eliminar",
-                    tint = Color.Red,
-                    modifier = Modifier.size(20.dp)
-                )
-
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red, modifier = Modifier.size(20.dp))
             }
         }
     }
 }
+
 
 
 
