@@ -1,5 +1,9 @@
 package com.example.pge.views
 
+import android.util.Log
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +32,12 @@ import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import kotlin.collections.listOf
 
 
 data class Presupuesto(
@@ -36,6 +46,258 @@ data class Presupuesto(
     val trimestre: String,
     val monto: Double
 )
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NewBudgetDialog(
+    onDismissRequest: () -> Unit,
+    onSaveBudget: (dependency: String, year: String, quarter: String, amount: String) -> Unit
+) {
+    var selectedDependency by remember { mutableStateOf("Secretaría de Finanzas") }
+    var fiscalYear by remember { mutableStateOf("2025") }
+    var quarter by remember { mutableStateOf("Q4 (Oct-Dec)") }
+    var assignedAmount by remember { mutableStateOf("0.00") }
+
+    val dependencies = listOf("Secretaría de Finanzas", "Secretaría de Educación", "Secretaría de Salud")
+    val fiscalYears = listOf("2023", "2024", "2025", "2026")
+    val quarters = listOf("Q1 (Jan-Mar)", "Q2 (Apr-Jun)", "Q3 (Jul-Sep)", "Q4 (Oct-Dec)")
+
+    // Se añade 3 variables de estado para controlar cada menú
+    var dependencyExpanded by remember { mutableStateOf(false) }
+    var yearExpanded by remember { mutableStateOf(false) }
+    var quarterExpanded by remember { mutableStateOf(false) }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .width(IntrinsicSize.Max)
+                .padding(horizontal = 24.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .width(320.dp)
+            ) {
+                // Header del Diálogo
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Asignar Nuevo Presupuesto",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    IconButton(onClick = onDismissRequest) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cerrar",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Divider(modifier = Modifier.padding(vertical = 8.dp)
+                    .fillMaxWidth())
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+                // PRIMER MENÚ (DEPENDENCIAS)
+                Text(text = "Seleccionar Dependencia *", style = MaterialTheme.typography.labelMedium)
+                ExposedDropdownMenuBox(
+                    expanded = dependencyExpanded, // Variable remember
+                    onExpandedChange = { dependencyExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = selectedDependency,
+                        onValueChange = { },
+                        readOnly = true,
+                       // label = { Text("Secretaría de Finanzas") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dependencyExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        shape = RoundedCornerShape(12.dp),// Forma de bordes redondeados
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = dependencyExpanded, // Variable remember
+                        onDismissRequest = { dependencyExpanded = false }
+                    ) {
+                        dependencies.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption) },
+                                onClick = {
+                                    selectedDependency = selectionOption
+                                    dependencyExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // SEGUNDO MENÚ (AÑO FISCAL)
+                Text(text = "Año Fiscal *", style = MaterialTheme.typography.labelMedium)
+                ExposedDropdownMenuBox(
+                    expanded = yearExpanded, // Variable remember
+                    onExpandedChange = { yearExpanded = it }
+                ) {
+                    OutlinedTextField(
+                        value = fiscalYear,
+                        onValueChange = { },
+                        readOnly = true,
+                        // label = { Text("2025") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = yearExpanded) }, // <<< CAMBIO AQUÍ
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        shape = RoundedCornerShape(12.dp),// Forma de bordes redondeados
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = yearExpanded,// Variable remember
+                        onDismissRequest = { yearExpanded = false }
+                    ) {
+                        fiscalYears.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption) },
+                                onClick = {
+                                    fiscalYear = selectionOption
+                                    yearExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                //TERCER MENÚ (TRIMESTRE)
+                Text(text = "Trimestre *", style = MaterialTheme.typography.labelMedium)
+                ExposedDropdownMenuBox(
+                    expanded = quarterExpanded, // <<< CAMBIO AQUÍ
+                    onExpandedChange = { quarterExpanded = it } // <<< CAMBIO AQUÍ
+                ) {
+                    OutlinedTextField(
+                        value = quarter,
+                        onValueChange = { },
+                        readOnly = true,
+                       // label = { Text("Q4 (Oct-Dec)") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = quarterExpanded) }, // <<< CAMBIO AQUÍ
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        shape = RoundedCornerShape(12.dp),// Forma de bordes redondeados
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            disabledContainerColor = Color.White,
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = quarterExpanded, // Variable remember
+                        onDismissRequest = { quarterExpanded = false }
+                    ) {
+                        quarters.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption) },
+                                onClick = {
+                                    quarter = selectionOption
+                                    quarterExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // El resto del formulario y botones
+                Text(text = "Monto Asignado (MXN) *", style = MaterialTheme.typography.labelMedium)
+                OutlinedTextField(
+                    value = assignedAmount,
+                    onValueChange = { assignedAmount = it },
+                  //  label = { Text("0.00") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),// Forma de bordes redondeados
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        disabledContainerColor = Color.White,
+                    )
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = onDismissRequest,
+                        shape = RoundedCornerShape(12.dp),// Forma de bordes redondeados
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline), // Borde de el button
+                        modifier = Modifier.weight(1f)
+                            .height(50.dp)
+                    ) {
+                        Text("Cancelar", style = MaterialTheme.typography.labelLarge)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            onSaveBudget(
+                                selectedDependency,
+                                fiscalYear,
+                                quarter,
+                                assignedAmount
+                            )
+                        },
+                        shape = RoundedCornerShape(12.dp),// Forma de bordes redondeados
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50),
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier.weight(1f)
+                            .height(50.dp)
+                    ) {
+                        Text("Guardar", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewNewBudgetDialog() {
+    MaterialTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.LightGray.copy(alpha = 0.5f)), // Fondo semi-transparente para simular el diálogo
+            contentAlignment = Alignment.Center
+        ) {
+
+            NewBudgetDialog(
+
+                onDismissRequest = { },
+                onSaveBudget = { _, _, _, _ -> }
+            )
+        }
+    }
+}
+
 
 
 @Composable
@@ -49,6 +311,23 @@ fun PresupuestoScreen(navController: NavController) {
         Presupuesto("Secretaría de Salud", "2025", "Q4 (Oct-Dic)", 5200000.0),
         Presupuesto("Seguridad Pública", "2025", "Q4 (Oct-Dic)", 4100000.0)
     )
+    // PASO 1: el estado 'showDialog' aquí, al nivel superior.
+    var showDialog by remember { mutableStateOf(false) }
+
+    // PASO 2: Llama al diálogo aquí, fuera del LazyColumn.
+    // De esta forma, se mostrará sobre toda la pantalla.
+    if (showDialog) {
+        NewBudgetDialog(
+            onDismissRequest = {
+                showDialog = false // Cierra el diálogo
+            },
+            onSaveBudget = { dep, year, q, amount ->
+                // ... lógica para guardar ...
+                Log.d("PresupuestoScreen", "Guardando: $dep, $year, $q, $amount")
+                showDialog = false // Cierra el diálogo al guardar
+            }
+        )
+    }
 
     LazyColumn(
         modifier = Modifier
@@ -58,7 +337,12 @@ fun PresupuestoScreen(navController: NavController) {
     ) {
         // Título y Botón
         item {
-            TitleAndButtonRow()
+            // PASO 3: Pasa una función lambda al botón para que
+            TitleAndButtonRow(
+                onAsignarClick = {
+                    showDialog = true
+                }
+            )
         }
 
         // Tarjetas de Resumen ---
@@ -76,7 +360,9 @@ fun PresupuestoScreen(navController: NavController) {
 
 //  Componente: Título y Botón "Asignar"
 @Composable
-fun TitleAndButtonRow() {
+fun TitleAndButtonRow(
+    onAsignarClick: () -> Unit // PASO 1: se agrega este parámetro
+   ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -96,7 +382,10 @@ fun TitleAndButtonRow() {
         horizontalArrangement = Arrangement.SpaceBetween
     ){
         Button(
-            onClick = { /* Acción para asignar presupuesto */ }
+            onClick = {
+                // PASO 3: Llama a la función del parámetro
+                onAsignarClick()
+            }
         ) {
             Icon(
                 Icons.Default.Add,
@@ -104,7 +393,7 @@ fun TitleAndButtonRow() {
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Asignar")
+            Text(text = "Asignar Presupuesto")
         }
     }
 }
@@ -268,7 +557,7 @@ fun PresupuestoItemRow(presupuesto: Presupuesto) {
 
 
 
-
+/*
 @Preview(showBackground = true)
 @Composable
 fun PresupuestoScreenPreview() {
@@ -278,4 +567,4 @@ fun PresupuestoScreenPreview() {
 
         PresupuestoScreen(navController)
     }
-}
+}*/
