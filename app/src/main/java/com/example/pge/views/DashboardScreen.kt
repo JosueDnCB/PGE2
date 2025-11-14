@@ -1,7 +1,9 @@
 package com.example.pge.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Bolt
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import java.text.NumberFormat
 import java.util.*
+import kotlin.random.Random
 
 // --- Data classes para los datos de ejemplo ---
 data class Inmueble(val nombre: String, val consumo: String)
@@ -209,18 +212,27 @@ fun EvolutionChartCard() {
             )
             Spacer(modifier = Modifier.height(16.dp))
             // --- Placeholder para el gráfico ---
-            Box(
+
+
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
-                contentAlignment = Alignment.Center
+                    .height(50.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
             ) {
-                Text(
-                    text = "[Aquí iría el componente del gráfico]",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = Color.Gray
-                )
+                // Lista de alturas relativas para las barras
+                val barHeights = List(8) { Random.nextFloat() * 0.8f + 0.2f } // entre 20% y 100%
+
+                barHeights.forEach { height ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(height) // Altura relativa
+                            .padding(horizontal = 2.dp)
+                            .background(PgeChartBlue, RoundedCornerShape(4.dp))
+                    )
+                }
             }
         }
     }

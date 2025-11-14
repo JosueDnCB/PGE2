@@ -33,6 +33,7 @@ import java.util.Locale
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.ui.window.Dialog
@@ -74,7 +75,8 @@ fun NewBudgetDialog(
         Card(
             modifier = Modifier
                 .width(IntrinsicSize.Max)
-                .padding(horizontal = 24.dp),
+                .padding(horizontal = 24.dp)
+                .verticalScroll(rememberScrollState()), //desplazamiento horizontal
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
