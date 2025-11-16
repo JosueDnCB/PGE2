@@ -18,9 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.pge.navigation.NavRoutes
+import com.example.pge.ui.theme.DarkText
+import com.example.pge.ui.theme.PgeBulletGreen
+import com.example.pge.ui.theme.PgeGreenButton
 import kotlin.collections.listOf
 
 @Composable
@@ -52,7 +56,6 @@ fun DrawerScreen(navController: NavController,
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 1f),
-        tonalElevation = 4.dp,
         // linea superior
         modifier = Modifier.drawBehind {
             // Define el grosor y el color de la línea
@@ -74,10 +77,13 @@ fun DrawerScreen(navController: NavController,
             NavigationBarItem(
                 selected = currentRoute == item.route,
                 onClick = {
-                    navController.navigate(item.route) {
-                        popUpTo(navController.graph.startDestinationId)
-                        launchSingleTop = true
+                    if (currentRoute != item.route) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId)
+                            launchSingleTop = true
+                        }
                     }
+
                 },
                 icon = {
                     Icon(
@@ -85,8 +91,41 @@ fun DrawerScreen(navController: NavController,
                         contentDescription = null
                     )
                 },
-                label = { Text(item.route)},
-                alwaysShowLabel = false
+                label = {
+                    Text(
+                        item.route,
+                        fontSize = 8.sp
+                    )},
+                alwaysShowLabel = false,
+                // Cambio de estilo del navBar según el estado de inicio de sesión
+                colors = if (isLoggedIn){
+                    NavigationBarItemDefaults.colors(
+                        //  Colores cuando está selecionado el icono
+                        selectedIconColor = Color.White, // Color del ícono
+                        selectedTextColor = Color.Gray, // Color del texto
+                        indicatorColor = PgeGreenButton, // Color del fondo (pastilla)
+
+                        // Colores cuando NO está seleccionado
+                        unselectedIconColor = Color.Gray,
+                        //  unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                } else {
+                 NavigationBarItemDefaults.colors(
+                        //  Colores cuando está selecionado el icono
+                        selectedIconColor = DarkText, // Color del ícono
+                        selectedTextColor = Color.Gray, // Color del texto
+                        indicatorColor = Color.Gray.copy(alpha = 0.3f), // Color del fondo (pastilla)
+
+                        // Colores cuando NO está seleccionado
+                        unselectedIconColor = Color.Gray,
+                        //  unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                }
+
+
+
             )
         }
     }

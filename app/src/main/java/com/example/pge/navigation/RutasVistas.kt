@@ -4,16 +4,16 @@ package com.example.pge.navigation
 sealed class NavRoutes(val route: String) {
 
 
-    object Transparencia : NavRoutes("transparencia")
+    object Transparencia : NavRoutes("Transparencia")
 
 
-    object Principal : NavRoutes("principal")
-    object Dashboard : NavRoutes("dashboard")
-    object Analisis : NavRoutes("analisis")
-    object Dependencias : NavRoutes("dependencias")
-    object CargaConsumos : NavRoutes("carga_consumos")
-    object Presupuestos : NavRoutes("presupuestos")
-    object Usuarios : NavRoutes("usuarios")
+    object Principal : NavRoutes("Inicio")
+    object Dashboard : NavRoutes("Dashboard")
+    object Analisis : NavRoutes("Analisis")
+    object Dependencias : NavRoutes("Dependencias")
+    object CargaConsumos : NavRoutes("Carga")
+    object Presupuestos : NavRoutes("Presupuestos")
+    object Usuarios : NavRoutes("Usuarios")
 
     object InicioView : NavRoutes("firstView")
 }

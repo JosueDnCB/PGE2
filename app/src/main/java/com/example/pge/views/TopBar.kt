@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,9 +27,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pge.ui.theme.DarkText
+import com.example.pge.ui.theme.PgeButtonText
+import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.ui.theme.Purple
+
 
 // Define tus colores aquí para que el Composable los conozca
 
@@ -37,6 +44,7 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun PgeTopAppBar(
     isLoggedIn: Boolean,
+    titulo: String? = "",
     // Parámetros para el email y la inicial del usuario
     userEmail: String? = "josue_dan7@outlook.com",
     userInitial: String? = "J",
@@ -48,19 +56,22 @@ fun PgeTopAppBar(
     val titleComposable: @Composable () -> Unit = {
         if (isLoggedIn) {
             // Estado "Logged In"
+            Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(
-                text = "Dashboard",
+
+                text = titulo?:"PGE-QROO",
                 fontWeight = FontWeight.Bold,
-                fontSize = 20.sp,
-                color = Color(0xFF0F172A) // Color de texto oscuro
-            )
+                fontSize = 14.sp,
+                color = DarkText
+            )}
         } else {
             // Estado "Logged Out": Muestra el título original
             Column(modifier = Modifier.padding(start = 8.dp)) {
                 Text(
                     text = "PGE-QROO",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    color = DarkText
                 )
             }
         }
@@ -90,29 +101,27 @@ fun PgeTopAppBar(
     val actionsComposable: @Composable RowScope.() -> Unit = {
         if (isLoggedIn) {
             //  Estado "Logged In"
+            Column(
+                // horizontalAlignment = Alignment.End alinea todo a la derecha
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.padding(end = 12.dp)
+            ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(end = 12.dp)
             ) {
-                // Email del usuario
-                Text(
-                    text = userEmail ?: "Correo del usuario",
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
                 Spacer(Modifier.width(8.dp))
 
                 // Etiqueta "Admin" o tipo de usuario
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    // Usando colores aproximados de tu imagen
                     color = Color(0xFFEEF2FF) // Fondo gris/azul pálido
                 ) {
                     Text(
                         text = "Admin",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFF4338CA), // Texto azul/morado
+                        color = Purple, // Texto azul/morado
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -133,6 +142,16 @@ fun PgeTopAppBar(
                         fontSize = 14.sp
                     )
                 }
+             }
+                // Espacio vertical entre la fila de arriba y el correo
+                Spacer(Modifier.height(4.dp))
+
+                // Texto de Email (abajo)
+                Text(
+                    text = userEmail ?: "Correo del usuario",
+                    fontSize = 12.sp,
+                    color = DarkText
+                )
             }
         } else {
             // Estado "Logged Out"
@@ -144,7 +163,9 @@ fun PgeTopAppBar(
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(end = 12.dp)
             ) {
-                Text("Acceso servidores públicos", fontSize = 12.sp)
+                Text("Acceso servidores públicos",
+                    fontSize = 12.sp,
+                    color = PgeButtonText)
             }
         }
     }

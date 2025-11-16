@@ -23,23 +23,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-
+import com.example.pge.navigation.NavRoutes
+import com.example.pge.ui.theme.DarkText
+import com.example.pge.ui.theme.PgeCardBorder
+import com.example.pge.ui.theme.PgeGreenButton
 
 
 /*
 Tarjeta principal del Módulo de Transparencia
  */
 @Composable
-fun TransparencyModuleCard(navController: NavController, isLoggedIn: Boolean) {
+fun TransparencyModuleCard(navController: NavController, isLoggedIn: Boolean = false,  onLoginSuccess: () -> Unit) {
     // Estado para controlar la visibilidad del diálogo
     var showLoginDialog by remember { mutableStateOf(false) }
 
-    // Estado para saber si el usuario inició sesión
-    var isLoggedIn by remember { mutableStateOf(false) } // O lo obtienes de un ViewModel
 
     Scaffold(
         topBar = { PgeTopAppBar(
-            isLoggedIn,
+            isLoggedIn = isLoggedIn,
+            titulo = "Transparencia",
             onShowLoginClick = {
                 showLoginDialog = true
             }) },
@@ -56,7 +58,7 @@ fun TransparencyModuleCard(navController: NavController, isLoggedIn: Boolean) {
                     // --- Aquí va tu lógica de inicio de sesión ---
                     Log.d("Login", "Email: $email, Pass: $pass")
                     // Si el login es exitoso:
-                    isLoggedIn = true
+                    onLoginSuccess()
                     showLoginDialog = false // Cierra el diálogo
                 }
             )
@@ -179,17 +181,26 @@ fun FeatureInfoCard(title: String, description: String) {
     }
 }
 
-
+// Función de pruebas
 @Preview(showBackground = true)
 @Composable
 fun TransparencyModulePreview() {
 
     MaterialTheme {
-      val isLoggedIn = true
+
         // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
-            val NavController = rememberNavController()
-            TransparencyModuleCard(NavController, isLoggedIn)
+            val navController = rememberNavController()
+            val isLoggedIn = true // Controlar el estado de inicio de sesión
+            TransparencyModuleCard(
+                navController = navController,
+                isLoggedIn = isLoggedIn,
+                onLoginSuccess = {
 
-
+                    navController.navigate(NavRoutes.Dashboard.route) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
     }
 }

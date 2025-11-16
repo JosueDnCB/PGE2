@@ -28,42 +28,36 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.pge.navigation.NavRoutes
+import com.example.pge.ui.theme.PgeApiGetBg
+import com.example.pge.ui.theme.PgeBulletGreen
+import com.example.pge.ui.theme.PgeChartBlue
+import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.ui.theme.PgeProgressBarBg
+import com.example.pge.ui.theme.PgeTagBg
+import com.example.pge.ui.theme.PgeTagText
 import kotlin.random.Random
-
-// Definición de Colores de la App basado en la versión web
-val PgeGreenButton = Color(0xFF3B8A7A) // Verde para "Acceso" y "Explorar"
-val PgeButtonText = Color.White
-val PgeChartBlue = Color(0xFF4C82E3)
-val PgeProgressBarBg = Color(0xFFE0E0E0)
-val PgeTagBg = Color(0xFFEEF2FD)
-val PgeTagText = Color(0xFF4C5F99)
-val PgeBulletGreen = Color(0xFF16A34A)
-val PgeApiGetBg = Color(0xFFF1F5F9)
-val PgeCardBorder = Color(0xFFF1F5F9) // Borde gris muy claro
-val AppBackground = Color(0xFFF8FAFC) // Fondo gris muy claro
-val DarkText = Color(0xFF0F172A) // Texto principal oscuro
 
 /*
  Pantalla principal que contiene todas las secciones.
 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PgeHomeScreen(navController: NavController,  isLoggedIn : Boolean) {
+fun PgeHomeScreen(navController: NavController,
+                  isLoggedIn: Boolean,
+                  onLoginSuccess: () -> Unit // Recibe la lambda
+    ) {
 
     // Estado para controlar la visibilidad del diálogo
     var showLoginDialog by remember { mutableStateOf(false) }
 
-    // Estado para saber si el usuario inició sesión
-    var isLoggedIn by remember { mutableStateOf(false) }
     Scaffold(
         topBar = { PgeTopAppBar(
-            isLoggedIn,
+            isLoggedIn = isLoggedIn,
             onShowLoginClick = {
                 showLoginDialog = true
             }) },
         containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
     ) { paddingValues ->
-
 
         // Si showLoginDialog es true, dibuja el LoginDialog
         if (showLoginDialog) {
@@ -77,7 +71,8 @@ fun PgeHomeScreen(navController: NavController,  isLoggedIn : Boolean) {
                     // if (viewModel.login(email, pass)) { ... }
 
                     // 2. Actualizas los estados
-                    isLoggedIn = true
+                    // 3. SE LLAMA A LA LAMBDA DEL PADRE
+                    onLoginSuccess()
                     showLoginDialog = false
 
                         //  NAVEGAR A DASHBOARD
@@ -103,8 +98,30 @@ fun PgeHomeScreen(navController: NavController,  isLoggedIn : Boolean) {
             // Sección 1: Hero (Título, botones)
             item {
                 HeroSection(
-                    onExploreClick = { /* TODO: Navegar al Dashboard */ },
-                    onTransparencyClick = { /* TODO: Navegar a Transparencia */ }
+                    onExploreClick = {
+                        //  NAVEGAR A DASHBOARD
+                        navController.navigate(NavRoutes.Dashboard.route) {
+                            // Esto limpia la pila de navegación para que el usuario
+                            // no pueda "volver" a la pantalla de login con el botón de atrás.
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            // Asegura que no se apilen múltiples copias de Principal
+                            launchSingleTop = true
+                        }
+                    },
+                    onTransparencyClick = {
+                        //  NAVEGAR A DASHBOARD
+                        navController.navigate(NavRoutes.Transparencia.route) {
+                            // Esto limpia la pila de navegación para que el usuario
+                            // no pueda "volver" a la pantalla de login con el botón de atrás.
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
+                            // Asegura que no se apilen múltiples copias de Principal
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
 
@@ -125,7 +142,6 @@ fun PgeHomeScreen(navController: NavController,  isLoggedIn : Boolean) {
         }
     }
 }
-
 
 
 /*
@@ -466,8 +482,21 @@ fun ApiEndpointItem(method: String, endpoint: String) {
 @Composable
 fun PgeHomeScreenPreview() {
     MaterialTheme {
-        val isLoggedIn = false
+
+        // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
         val navController = rememberNavController()
-        PgeHomeScreen(navController, isLoggedIn)
+        val isLoggedIn = false // Controlar el estado de inicio de sesión
+        PgeHomeScreen(
+            navController = navController,
+            isLoggedIn = isLoggedIn,
+            onLoginSuccess = {
+                // Esta lambda se ejecutará cuando el login sea exitoso
+
+                navController.navigate(NavRoutes.Dashboard.route) {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
+        )
     }
 }

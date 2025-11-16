@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.pge.ui.theme.PgeGreenButton
 
 
 val PgeLoginButtonGreen = Color(0xFFA0CBBF)
@@ -102,7 +103,8 @@ fun LoginDialog(
                         .padding(top = 8.dp), // Un espacio extra arriba
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = PgeLoginButtonGreen,
+                       // containerColor = PgeLoginButtonGreen,
+                        containerColor = PgeGreenButton,
                         contentColor = Color.White // Tu imagen muestra texto blanco
                     )
                 ) {

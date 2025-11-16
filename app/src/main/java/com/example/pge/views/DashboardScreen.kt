@@ -1,5 +1,6 @@
 package com.example.pge.views
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.pge.ui.theme.DarkText
+import com.example.pge.ui.theme.PgeChartBlue
 import java.text.NumberFormat
 import java.util.*
 import kotlin.random.Random
@@ -28,13 +32,45 @@ data class Inmueble(val nombre: String, val consumo: String)
 
 // --- Composable Principal ---
 @Composable
-fun DashboardScreen(navController: NavController) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
+fun DashboardScreen(navController: NavController, isLoggedIn: Boolean, onLoginSuccess: () -> Unit) {
+
+    // Estado para controlar la visibilidad del diálogo
+    var showLoginDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = { PgeTopAppBar(
+            isLoggedIn = isLoggedIn,
+            titulo = "Dashboard",
+            // Esta lambda se ejecutará cuando el login sea exitoso
+            onShowLoginClick = {
+                showLoginDialog = true
+            }) },
+        containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
+    ) { paddingValues ->
+        // Si showLoginDialog es true, dibuja el LoginDialog
+        if (showLoginDialog) {
+            LoginDialog(
+                onDismissRequest = {
+                    // Cierra el diálogo si se toca fuera o se presiona "X"
+                    showLoginDialog = false
+                },
+                onLoginClick = { email, pass ->
+                    // --- Aquí va tu lógica de inicio de sesión ---
+                    Log.d("Login", "Email: $email, Pass: $pass")
+                    // Si el login es exitoso:
+                    onLoginSuccess()
+                    showLoginDialog = false // Cierra el diálogo
+                }
+            )
+        }
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
 
         item {
             Row(
@@ -45,7 +81,8 @@ fun DashboardScreen(navController: NavController) {
                 Text(
                     text = "Secretaría de Finanzas",
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
                 )
             }
 
@@ -103,6 +140,7 @@ fun DashboardScreen(navController: NavController) {
 
     }
 }
+}
 
 @Composable
 fun InfoCard(
@@ -114,7 +152,8 @@ fun InfoCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
             modifier = Modifier
@@ -128,7 +167,8 @@ fun InfoCard(
                 Text(
                     text = value,
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = DarkText
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(text = change, style = MaterialTheme.typography.bodySmall, color = changeColor)
@@ -151,7 +191,8 @@ fun BudgetCard(title: String, usedAmount: Float, totalAmount: Float) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -177,13 +218,17 @@ fun BudgetCard(title: String, usedAmount: Float, totalAmount: Float) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
-                strokeCap = StrokeCap.Round
+                color = PgeChartBlue,     // Este es el color del progreso
+                trackColor = Color.Gray   // color restante
+
+
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "${formatAmount(usedAmount)}M / ${formatAmount(totalAmount)}M",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = DarkText
             )
         }
     }
@@ -202,13 +247,15 @@ private fun formatAmount(amount: Float): String {
 fun EvolutionChartCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Evolución de Consumo y Costo - 12 Meses",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = DarkText
             )
             Spacer(modifier = Modifier.height(16.dp))
             // --- Placeholder para el gráfico ---
@@ -243,13 +290,15 @@ fun EvolutionChartCard() {
 fun TopConsumptionCard(inmuebles: List<Inmueble>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
                 text = "Inmuebles con Mayor Consumo",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = DarkText
             )
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -293,21 +342,21 @@ fun TopConsumptionCard(inmuebles: List<Inmueble>) {
                         modifier = Modifier.weight(0.15f),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = DarkText,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = inmueble.nombre,
                         modifier = Modifier.weight(0.55f),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        color = DarkText
                     )
                     Text(
                         text = inmueble.consumo,
                         modifier = Modifier.weight(0.3f),
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.End,
-                        color = MaterialTheme.colorScheme.primary
+                        color = DarkText
                     )
                 }
             }

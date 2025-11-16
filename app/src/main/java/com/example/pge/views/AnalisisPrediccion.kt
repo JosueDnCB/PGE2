@@ -1,5 +1,6 @@
 package com.example.pge.views
 
+import android.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -9,52 +10,78 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.pge.ui.theme.GrayCard
+import com.example.pge.ui.theme.PgeBulletGreen
+import com.example.pge.ui.theme.PgeGreenButton
 
 @Composable
-fun AnalisisDashboardScreen(navController: NavController) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // 1. Título Principal
-        item {
-            TituloPrincipal()
-        }
+fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean) {
 
-        // 2. Tarjeta de Filtros
-        item {
-            FiltrosCard()
-        }
+    // Estado para controlar la visibilidad del diálogo
+    var showLoginDialog by remember { mutableStateOf(false) }
 
-        // 3. Tarjeta de Predicción de Gasto
-        item {
-            PrediccionGastoCard()
-        }
+    // Estado para saber si el usuario inició sesión
+    var isLoggedIn by remember { mutableStateOf(true) }
 
-        // 4. Tarjeta de Comparativa de Consumo
-        item {
-            ComparativaConsumoCard()
-        }
+    Scaffold(
+        topBar = {
+            PgeTopAppBar(
+                isLoggedIn,
+                "Analisis y predicción",
+                onShowLoginClick = {
+                    showLoginDialog = true
+                })
+        },
+        containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
+    ) { paddingValues ->
 
-        // 5. Tarjeta de Patrones de Consumo Mensual
-        item {
-            PatronesConsumoMensualCard()
-        }
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            // 1. Título Principal
+            item {
+                TituloPrincipal()
+            }
 
-        // 6. Tarjeta de Intensidad y Patrón
-        item {
-            IntensidadConsumoCard()
+            // 2. Tarjeta de Filtros
+            item {
+                FiltrosCard()
+            }
+
+            // 3. Tarjeta de Predicción de Gasto
+            item {
+                PrediccionGastoCard()
+            }
+
+            // 4. Tarjeta de Comparativa de Consumo
+            item {
+                ComparativaConsumoCard()
+            }
+
+            // 5. Tarjeta de Patrones de Consumo Mensual
+            item {
+                PatronesConsumoMensualCard()
+            }
+
+            // 6. Tarjeta de Intensidad y Patrón
+            item {
+                IntensidadConsumoCard()
+            }
         }
     }
 }
@@ -83,7 +110,8 @@ fun TituloPrincipal() {
 fun FiltrosCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -170,20 +198,22 @@ fun DropdownFiltro(
                 .menuAnchor(), // Importante para anclar el menú
 
         )
-
-
         // 5. El menú que se despliega
         ExposedDropdownMenu(
             expanded = isExpanded,
-            onDismissRequest = { isExpanded = false }
+            onDismissRequest = { isExpanded = false },
+            modifier = Modifier.background(PgeGreenButton.copy(alpha = 0.3f))
         ) {
             opciones.forEach { opcion ->
                 DropdownMenuItem(
-                    text = { Text(text = opcion) },
+                    text = { Text(
+                        text = opcion
+                    ) },
                     onClick = {
                         selectedOption = opcion
                         isExpanded = false
                     }
+
                 )
             }
         }
@@ -194,7 +224,8 @@ fun DropdownFiltro(
 fun PrediccionGastoCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -206,14 +237,14 @@ fun PrediccionGastoCard() {
                 fontWeight = FontWeight.Bold
             )
 
-            // --- PLACEHOLDER PARA LA GRÁFICA ---
+            // PLACEHOLDER PARA LA GRÁFICA
             // Aquí debes reemplazar este Box con tu componente de gráfica (de Vico, MPAndroidChart, etc.)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    .background(GrayCard.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -239,7 +270,8 @@ fun PrediccionGastoCard() {
 fun ComparativaConsumoCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -258,7 +290,7 @@ fun ComparativaConsumoCard() {
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    .background(GrayCard.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -282,11 +314,12 @@ fun ComparativaConsumoCard() {
                 }
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    colors = CardDefaults.cardColors(containerColor = PgeGreenButton)
                 ) {
                     Text(
                         text = "Promedio: 179,646 kWh/mes",
                         style = MaterialTheme.typography.bodySmall,
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                     )
@@ -300,7 +333,8 @@ fun ComparativaConsumoCard() {
 fun PatronesConsumoMensualCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -320,7 +354,7 @@ fun PatronesConsumoMensualCard() {
                     .fillMaxWidth()
                     .height(200.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+                    .background(GrayCard.copy(alpha = 0.5f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -338,7 +372,8 @@ fun PatronesConsumoMensualCard() {
 fun IntensidadConsumoCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -371,10 +406,11 @@ fun IntensidadConsumoCard() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    containerColor = GrayCard.copy(alpha = 0.5f)
                 )
             ) {
-                Column(Modifier.padding(12.dp)) {
+                Column(Modifier.padding(12.dp)
+                    ) {
                     Text(
                         text = "Patrón identificado:",
                         style = MaterialTheme.typography.labelLarge,
@@ -404,4 +440,22 @@ fun ColorBox(color: Color) {
             )
     )
 }
+
+
+@Preview(showBackground = true)
+@Composable
+fun AnalisisModulePreview() {
+
+    MaterialTheme {
+
+        val isLoggedIn = false
+        // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
+        val NavController = rememberNavController()
+        AnalisisDashboardScreen(NavController, isLoggedIn)
+
+
+    }
+}
+
+
 

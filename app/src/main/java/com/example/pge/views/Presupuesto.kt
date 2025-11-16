@@ -1,5 +1,7 @@
 package com.example.pge.views
 
+import android.R
+import android.R.color.white
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -18,7 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,13 +33,22 @@ import androidx.navigation.compose.rememberNavController
 import java.text.NumberFormat
 import java.util.Locale
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.indicatorColor
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.pge.ui.theme.GrayTableTop
+import com.example.pge.ui.theme.PgeGreenButton
 import kotlin.collections.listOf
 
 
@@ -79,7 +90,8 @@ fun NewBudgetDialog(
                 .verticalScroll(rememberScrollState()), //desplazamiento horizontal
             shape = RoundedCornerShape(12.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+
         ) {
             Column(
                 modifier = Modifier
@@ -303,7 +315,7 @@ fun PreviewNewBudgetDialog() {
 
 
 @Composable
-fun PresupuestoScreen(navController: NavController) {
+fun PresupuestoScreen(navController: NavController, isLoggedIn: Boolean, onLoginSuccess: () -> Unit) {
 
 
     // Datos de ejemplo
@@ -331,159 +343,196 @@ fun PresupuestoScreen(navController: NavController) {
         )
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Título y Botón
-        item {
-            // PASO 3: Pasa una función lambda al botón para que
-            TitleAndButtonRow(
-                onAsignarClick = {
-                    showDialog = true
-                }
-            )
-        }
+    Scaffold(
+        topBar = {
+            PgeTopAppBar(
+                isLoggedIn = isLoggedIn,
+                titulo = "Presupuesto",
+                onShowLoginClick = {
+                    // showLoginDialog = true
+                })
+        },
+        containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
+    ) { paddingValues ->
 
-        // Tarjetas de Resumen ---
-        item {
-            HeaderSection()
-        }
-
-        // Tarjeta de la Lista ---
-        item {
-            ListaPresupuestosCard(presupuestos)
-        }
-    }
-
-}
-
-//  Componente: Título y Botón "Asignar"
-@Composable
-fun TitleAndButtonRow(
-    onAsignarClick: () -> Unit // PASO 1: se agrega este parámetro
-   ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = "Presupuestos Asignados",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ){
-        Button(
-            onClick = {
-                // PASO 3: Llama a la función del parámetro
-                onAsignarClick()
-            }
-        ) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "Asignar Presupuesto")
-        }
-    }
-}
-
-// Componente: Sección de 3 Tarjetas de Resumen
-@Composable
-fun HeaderSection() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        SummaryCard(
-            title = "Presupuesto Total Q4 2025",
-            value = "$27,100,000",
-            valueStyle = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.weight(1f)
-        )
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(){
-
-        SummaryCard(
-            title = "Dependencias",
-            value = "5",
-            valueStyle = MaterialTheme.typography.headlineMedium, // Más grande
-            modifier = Modifier.weight(1f)
-        )
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-    Row(){
-        SummaryCard(
-            title = "Promedio por Dependencia",
-            value = "$5,420,000",
-            valueStyle = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-// Componente: Tarjeta de Resumen Reutilizable
-@Composable
-fun SummaryCard(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier,
-    valueStyle: TextStyle = MaterialTheme.typography.headlineMedium
-) {
-    Card(modifier = modifier) {
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = value,
-                style = valueStyle,
-                fontWeight = FontWeight.Bold
-            )
+            // Título y Botón
+            item {
+                // PASO 3: Pasa una función lambda al botón para que
+                TitleAndButtonRow(
+                    onAsignarClick = {
+                        showDialog = true
+                    }
+                )
+            }
+
+            // Tarjetas de Resumen ---
+            item {
+                HeaderSection()
+            }
+
+            // Tarjeta de la Lista ---
+            item {
+                ListaPresupuestosCard(presupuestos)
+            }
         }
+
     }
 }
 
-//Componente: Tarjeta de la Lista de Presupuestos ---
-@Composable
-fun ListaPresupuestosCard(presupuestos: List<Presupuesto>) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
+    //  Componente: Título y Botón "Asignar"
+    @Composable
+    fun TitleAndButtonRow(
+        onAsignarClick: () -> Unit // PASO 1: se agrega este parámetro
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
-                text = "Lista de Presupuestos",
-                style = MaterialTheme.typography.titleLarge,
+                text = "Presupuestos Asignados",
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Encabezados de la Lista ---
-            PresupuestoListHeader()
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Button(
+                onClick = {
+                    // PASO 3: Llama a la función del parámetro
+                    onAsignarClick()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor =  PgeGreenButton)
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "Asignar Presupuesto")
 
-            // --- Filas de la Lista ---
-            // Usamos un Column normal porque ya estamos dentro de un LazyColumn
+            }
+        }
+    }
 
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Componente: Sección de 3 Tarjetas de Resumen
+    @Composable
+    fun HeaderSection() {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SummaryCard(
+                title = "Presupuesto Total Q4 2025",
+                value = "$27,100,000",
+                valueStyle = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row() {
+
+            SummaryCard(
+                title = "Dependencias",
+                value = "5",
+                valueStyle = MaterialTheme.typography.headlineMedium, // Más grande
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row() {
+            SummaryCard(
+                title = "Promedio por Dependencia",
+                value = "$5,420,000",
+                valueStyle = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    // Componente: Tarjeta de Resumen Reutilizable
+    @Composable
+    fun SummaryCard(
+        title: String,
+        value: String,
+        modifier: Modifier = Modifier,
+        valueStyle: TextStyle = MaterialTheme.typography.headlineMedium
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = value,
+                    style = valueStyle,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+
+    //Componente: Tarjeta de la Lista de Presupuestos ---
+    @Composable
+    fun ListaPresupuestosCard(presupuestos: List<Presupuesto>) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(modifier = Modifier.padding(6.dp)) {
+                Text(
+                    text = "Lista de Presupuestos",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+
+                // --- Filas de la Lista ---
+                // Usamos un Column normal porque ya estamos dentro de un LazyColumn
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()) //desplazamiento horizontal
+                        .padding(0.dp) // Padding para separar la "tarjeta" del borde
+                        // El contenedor con bordes redondeados (como en tu imagen)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(color = Color.White), // Fondo blanco
+                    verticalArrangement = Arrangement.spacedBy(0.dp)
+                ) {
+                    // --- Encabezados de la Lista ---
+                    PresupuestoListHeader()
+                    Divider(
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        color = Color.LightGray
+                    )
 
                     presupuestos.forEach { presupuesto ->
                         PresupuestoItemRow(presupuesto)
@@ -491,70 +540,175 @@ fun ListaPresupuestosCard(presupuestos: List<Presupuesto>) {
 
                 }
 
+            }
         }
     }
-}
 
-// Componente: Encabezados de la Lista ---
-@Composable
-fun PresupuestoListHeader() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text("Dependencia", Modifier.weight(3f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Año", Modifier.weight(2f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Trimestre", Modifier.weight(4.5f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Monto Asignado", Modifier.weight(3f), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
-        Text("Acciones", Modifier.weight(1.5f), style = MaterialTheme.typography.labelSmall, color = Color.Gray, textAlign = TextAlign.End)
-    }
-}
-
-// Componente: Fila de un Item de Presupuesto ---
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PresupuestoItemRow(presupuesto: Presupuesto) {
-    val format = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()) //desplazamiento horizontal
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(presupuesto.dependencia, Modifier.width(200.dp), style = MaterialTheme.typography.bodyMedium)
-
-        Text(presupuesto.anio, Modifier.width(100.dp), style = MaterialTheme.typography.bodyMedium)
-
-        Box(modifier = Modifier.width(150.dp)) {
-            AssistChip(
-                onClick = { },
-                label = { Text(presupuesto.trimestre, style = MaterialTheme.typography.labelMedium) }
+    // Componente: Encabezados de la Lista ---
+    @Composable
+    fun PresupuestoListHeader() {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(GrayTableTop) // Fondo blanco o de superficie
+                .padding(horizontal = 16.dp, vertical = 12.dp), // Padding interno
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Dependencia",
+                Modifier.width(200.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.DarkGray
+            )
+            Text(
+                "Año",
+                Modifier.width(100.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.DarkGray
+            )
+            Text(
+                "Trimestre",
+                modifier = Modifier.width(150.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.DarkGray
+            )
+            Text(
+                "Monto Asignado",
+                modifier = Modifier.width(150.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.DarkGray
+            )
+            Text(
+                "Acciones",
+                modifier = Modifier.width(120.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.DarkGray,
+                textAlign = TextAlign.End
             )
         }
+    }
 
-        Text(
-            text = format.format(presupuesto.monto),
-            modifier = Modifier.width(150.dp),
-            textAlign = TextAlign.End,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.bodyMedium
-        )
+    // Componente: Fila de un Item de Presupuesto ---
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun PresupuestoItemRow(presupuesto: Presupuesto) {
+        val format = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
 
         Row(
-            modifier = Modifier.width(120.dp),
-            horizontalArrangement = Arrangement.End
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .background(color = Color.White) // Fondo blanco o de superficie,
+                .padding(horizontal = 16.dp, vertical = 12.dp), // Padding interno
+            verticalAlignment = Alignment.CenterVertically
+
         ) {
-            IconButton(onClick = { /* Acción Editar */ }) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar", modifier = Modifier.size(20.dp))
+            Text(
+                presupuesto.dependencia,
+                Modifier.width(200.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Text(
+                presupuesto.anio,
+                Modifier.width(100.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Box(
+                modifier = Modifier.width(150.dp)
+            ) {
+                AssistChip(
+                    onClick = { },
+                    label = {
+                        Text(
+                            presupuesto.trimestre,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Blue
+                        )
+                    }
+                )
             }
-            IconButton(onClick = { /* Acción Eliminar */ }) {
-                Icon(Icons.Default.Delete, contentDescription = "Eliminar", tint = Color.Red, modifier = Modifier.size(20.dp))
+
+            Text(
+                text = format.format(presupuesto.monto),
+                modifier = Modifier.width(150.dp),
+                textAlign = TextAlign.End,
+                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Row(
+                modifier = Modifier.width(120.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+
+                // Botón editar
+                // Observa el estado "presionado"
+                var selectionState by remember { mutableStateOf("NONE") }
+                // Define los colores basados en el estado
+                val editTint = if (selectionState == "EDIT") Color.Green else Color.Gray
+                val deleteTint = if (selectionState == "DELETE") Color.Red else Color.Gray
+
+                IconButton(
+                    onClick = {
+                        selectionState = if (selectionState == "EDIT") "NONE" else "EDIT"
+                    },
+
+                    colors = IconButtonDefaults.iconButtonColors(
+                        /*
+                        // Color de fondo (la "pastilla")
+                        containerColor = if (selectionState == "EDIT") {
+                            PgeGreenButton
+                        } else {
+                            Color.Transparent // Sin fondo
+                        },*/
+                        // Color del ícono (esto controla el 'tint')
+                        contentColor = editTint
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        // Ya no necesitas 'tint' aquí, 'contentColor' se encarga
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                // Botón de Eliminar
+                IconButton(
+                    onClick = {
+                        selectionState = if (selectionState == "DELETE") "NONE" else "DELETE"
+                    },
+
+                    colors = IconButtonDefaults.iconButtonColors(
+                        /*
+                        // Color de fondo (la "pastilla")
+                        containerColor = if (selectionState == "DELETE") {
+                            PgeGreenButton
+                        } else {
+                            Color.Transparent
+                        },*/
+                        // Color del ícono (esto controla el 'tint')
+                        contentColor = deleteTint
+                    )
+                ){
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        // color dinámico
+                        tint = deleteTint,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
+        Divider(
+            modifier = Modifier.padding(vertical = 8.dp),
+            color = Color.LightGray
+
+        )
     }
-}
 
 
 
