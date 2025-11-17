@@ -60,6 +60,8 @@ dependencies {
     implementation ("androidx.compose.material3:material3")
     implementation(libs.material3)
     implementation(libs.ui.graphics)
+    implementation(libs.androidx.benchmark.traceprocessor)
+    implementation(libs.androidx.compose.foundation.layout)
     debugImplementation ("androidx.compose.ui:ui-tooling")
     debugImplementation ("androidx.compose.ui:ui-test-manifest")
 

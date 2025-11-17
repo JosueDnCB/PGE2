@@ -27,9 +27,9 @@ import com.example.pge.views.DrawerScreen
 import com.example.pge.views.PgeHomeScreen
 import com.example.pge.views.PresupuestoScreen
 import com.example.pge.views.TransparencyModuleCard
-import com.example.pge.views.UsuariosScreen
 import kotlin.collections.listOf
 import androidx.core.view.WindowCompat
+import com.example.pge.views.PerfilUsuarioScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -145,7 +145,7 @@ class MainActivity : ComponentActivity() {
                                         launchSingleTop = true
                                     }
                                 })}
-                            composable(NavRoutes.Usuarios.route) {UsuariosScreen() }
+                            composable(NavRoutes.Usuarios.route) {PerfilUsuarioScreen(navController, isLoggedIn) }
                         }
                     }
                 }
