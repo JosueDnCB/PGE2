@@ -44,10 +44,10 @@ data class InmuebleItem(
 
 interface PgeApiService {
     // Endpoint para obtener el dashboard
-    // http://10.0.2.2:8000/api/dashboard
+    // http://127.0.0.1:8000/api/dashboard
     @GET("dashboard")
     suspend fun getDashboardData(
-        @Query("id_dependencia") dependenciaId: Int? = null,
+        @Query("dependencia_id") dependenciaId: Int? = null,
         @Query("mes") mes: Int? = null,
         @Query("año") anio: Int? = null
     ): DashboardResponse
