@@ -1,4 +1,4 @@
-package com.example.pge.repositories;
+package com.example.pge.models;
 
 public class loginApi {
     val email: String,
