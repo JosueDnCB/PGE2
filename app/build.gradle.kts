@@ -58,6 +58,11 @@ dependencies {
     implementation ("androidx.compose.ui:ui-graphics")
     implementation ("androidx.compose.ui:ui-tooling-preview")
     implementation ("androidx.compose.material3:material3")
+    // Retrofit & Gson for API calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // ViewModel & LiveData for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation(libs.material3)
     implementation(libs.ui.graphics)
     implementation(libs.androidx.benchmark.traceprocessor)

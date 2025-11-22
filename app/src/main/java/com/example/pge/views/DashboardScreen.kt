@@ -6,141 +6,170 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.pge.models.DashboardResponse
+import com.example.pge.models.InmuebleItem
 import com.example.pge.ui.theme.DarkText
 import com.example.pge.ui.theme.PgeChartBlue
+import com.example.pge.viewmodels.DashboardUiState
+import com.example.pge.viewmodels.DashboardViewModel
 import java.text.NumberFormat
 import java.util.*
 import kotlin.random.Random
 
-// --- Data classes para los datos de ejemplo ---
-data class Inmueble(val nombre: String, val consumo: String)
-
-// --- Composable Principal ---
 @Composable
-fun DashboardScreen(navController: NavController, isLoggedIn: Boolean, onLoginSuccess: () -> Unit) {
-
-    // Estado para controlar la visibilidad del diálogo
+fun DashboardScreen(
+    navController: NavController,
+    isLoggedIn: Boolean,
+    onLoginSuccess: () -> Unit,
+    viewModel: DashboardViewModel = viewModel() // Inyectamos el ViewModel aquí
+) {
     var showLoginDialog by remember { mutableStateOf(false) }
+    val uiState = viewModel.uiState
 
     Scaffold(
-        topBar = { PgeTopAppBar(
-            isLoggedIn = isLoggedIn,
-            titulo = "Dashboard",
-            // Esta lambda se ejecutará cuando el login sea exitoso
-            onShowLoginClick = {
-                showLoginDialog = true
-            }) },
-        containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
+        topBar = {
+
+            PgeTopAppBar(
+                 isLoggedIn = isLoggedIn,
+                 titulo = "Dashboard",
+                 onShowLoginClick = { showLoginDialog = true }
+             )
+
+        },
+        containerColor = Color(0xFFF8FAFC)
     ) { paddingValues ->
-        // Si showLoginDialog es true, dibuja el LoginDialog
-        if (showLoginDialog) {
-            LoginDialog(
-                onDismissRequest = {
-                    // Cierra el diálogo si se toca fuera o se presiona "X"
-                    showLoginDialog = false
-                },
-                onLoginClick = { email, pass ->
-                    // --- Aquí va tu lógica de inicio de sesión ---
-                    Log.d("Login", "Email: $email, Pass: $pass")
-                    // Si el login es exitoso:
-                    onLoginSuccess()
-                    showLoginDialog = false // Cierra el diálogo
+
+        Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+
+            when (uiState) {
+                is DashboardUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-            )
-        }
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Secretaría de Finanzas",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
+                is DashboardUiState.Error -> {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.Error, contentDescription = null, tint = Color.Red, modifier = Modifier.size(48.dp))
+                        Text("Ocurrió un error: ${uiState.message}", modifier = Modifier.padding(16.dp))
+                        Button(onClick = { viewModel.fetchDashboardData() }) {
+                            Text("Reintentar")
+                        }
+                    }
+                }
+                is DashboardUiState.Success -> {
+                    // Renderizamos el contenido real con los datos de la API
+                    DashboardContent(data = uiState.data)
+                }
             }
 
+            // Login Dialog Logic (Se mantiene igual)
+            if (showLoginDialog) {
+                LoginDialog(
+                    onDismissRequest = {
+                        // Cierra el diálogo si se toca fuera o se presiona "X"
+                        showLoginDialog = false
+                    },
+                    onLoginClick = { email, pass ->
+                        // --- Aquí va tu lógica de inicio de sesión ---
+                        Log.d("Login", "Email: $email, Pass: $pass")
+                        // Si el login es exitoso:
+                        onLoginSuccess()
+                        showLoginDialog = false // Cierra el diálogo
+                    }
+                )
+
+            }
+        }
+    }
+}
+
+@Composable
+fun DashboardContent(data: DashboardResponse) {
+
+    // Formateadores
+    val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
+    val numberFormat = NumberFormat.getNumberInstance(Locale("es", "MX"))
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        item {
+            Text(
+                text = "Secretaría de Finanzas - Período ${data.periodo.mes}/${data.periodo.año}",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = DarkText
+            )
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // --- Resto de tus tarjetas ---
+        // 1. Consumo
         item {
             InfoCard(
                 title = "Consumo del Mes (kWh)",
-                value = "150,230 kWh",
-                change = "▲ 5.2% vs Mes Anterior",
+                value = "${numberFormat.format(data.kpis.consumo_mes_kwh)} kWh",
+                change = "Datos actualizados", // Podrías calcular la variación si el backend la manda
+                //change = "▲ 5.2% vs Mes Anterior",
                 changeColor = Color(0xFF388E3C),
                 icon = Icons.Default.Bolt
             )
         }
+
+        // 2. Costo
         item {
             InfoCard(
                 title = "Costo del Mes (MXN)",
-                value = "$285,437.00",
-                change = "▼ 2.1% vs Mes Anterior",
+                value = currencyFormat.format(data.kpis.costo_mes),
+                change = "Total facturado",
+               // change = "▼ 2.1% vs Mes Anterior",
                 changeColor = Color(0xFFD32F2F),
                 icon = Icons.Default.AttachMoney
             )
         }
+
+        // 3. Presupuesto
         item {
+            // Calcular uso para la barra de progreso
+            // Evitar división por cero
+            val used = data.kpis.costo_mes.toFloat()
+            val total = data.kpis.presupuesto_trimestre.toFloat()
+
             BudgetCard(
-                title = "Uso del Presupuesto (Q4)",
-                usedAmount = 2.25f,
-                totalAmount = 3.00f
-            )
-        }
-        item {
-            InfoCard(
-                title = "Ahorro vs Mismo Mes Año Anterior",
-                value = "$30,150.00",
-                change = "(Octubre 2024)",
-                changeColor = Color.Gray,
-                icon = Icons.Default.Savings
-            )
-        }
-        item {
-            EvolutionChartCard()
-        }
-        item {
-            TopConsumptionCard(
-                inmuebles = listOf(
-                    Inmueble("Edificio Central", "25,120 kWh"),
-                    Inmueble("Oficinas Zona Norte", "22,500 kWh"),
-                    Inmueble("Archivo General", "18,900 kWh"),
-                    Inmueble("Bodega Principal", "15,340 kWh")
-                )
+                title = "Presupuesto Trimestre ${data.periodo.trimestre}",
+                usedAmount = used,
+                totalAmount = total
             )
         }
 
+        // 4. Gráfica
+        item {
+            // Pasamos los datos reales para pintar las barras dinámicamente (simplificado)
+            EvolutionChartCard(data.data_evolucion.map { it.total_consumo.toFloat() })
+        }
+
+        // 5. Top Inmuebles
+        item {
+            TopConsumptionCard(inmuebles = data.data_inmuebles)
+        }
     }
 }
-}
+
+// --- Componentes Reutilizables Adaptados ---
 
 @Composable
 fun InfoCard(
@@ -152,132 +181,91 @@ fun InfoCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = title, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = value,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = DarkText
                 )
-                Spacer(modifier = Modifier.height(4.dp))
                 Text(text = change, style = MaterialTheme.typography.bodySmall, color = changeColor)
             }
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            Icon(imageVector = icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(32.dp))
         }
     }
 }
 
 @Composable
 fun BudgetCard(title: String, usedAmount: Float, totalAmount: Float) {
-    // Formateador para moneda
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
-    currencyFormat.maximumFractionDigits = 2
+    // Evitamos NaN si el total es 0
+    val progress = if (totalAmount > 0) (usedAmount / totalAmount).coerceIn(0f, 1f) else 0f
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray,
-                    modifier = Modifier.weight(1f)
-                )
-                Icon(
-                    imageVector = Icons.Default.AttachMoney,
-                    contentDescription = title,
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = title, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            Spacer(modifier = Modifier.height(12.dp))
+
             LinearProgressIndicator(
-                progress = { usedAmount / totalAmount },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(8.dp),
-                color = PgeChartBlue,     // Este es el color del progreso
-                trackColor = Color.Gray   // color restante
-
-
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = if (progress > 0.9f) Color.Red else PgeChartBlue,
+                trackColor = Color.LightGray,
             )
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "${formatAmount(usedAmount)}M / ${formatAmount(totalAmount)}M",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = DarkText
-            )
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = "Gastado: ${currencyFormat.format(usedAmount)}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                Text(text = "Total: ${currencyFormat.format(totalAmount)}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
         }
     }
 }
-// Helper para formatear los millones
-private fun formatAmount(amount: Float): String {
-    return if (amount.rem(1) == 0f) {
-        String.format(Locale.US, "%.2f", amount)
-    } else {
-        String.format(Locale.US, "%.2f", amount)
-    }
-}
-
 
 @Composable
-fun EvolutionChartCard() {
+fun EvolutionChartCard(dataPoints: List<Float>) {
+    val maxVal = dataPoints.maxOrNull() ?: 1f
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Evolución de Consumo y Costo - 12 Meses",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
+            Text("Evolución Consumo (Últimos 12 meses)", fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
-            // --- Placeholder para el gráfico ---
-
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
+                modifier = Modifier.fillMaxWidth().height(100.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                // Lista de alturas relativas para las barras
-                val barHeights = List(8) { Random.nextFloat() * 0.8f + 0.2f } // entre 20% y 100%
+                // Si no hay datos, mostramos placeholder
+                val listToRender = if (dataPoints.isEmpty()) List(5) { 0.2f } else dataPoints
 
-                barHeights.forEach { height ->
+                listToRender.forEach { value ->
+                    // Altura relativa
+                    val heightFraction = (value / maxVal).coerceIn(0.1f, 1f)
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(height) // Altura relativa
-                            .padding(horizontal = 2.dp)
-                            .background(PgeChartBlue, RoundedCornerShape(4.dp))
+                            .fillMaxHeight(heightFraction)
+                            .padding(horizontal = 4.dp)
+                            .background(PgeChartBlue, RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                     )
                 }
             }
@@ -285,80 +273,29 @@ fun EvolutionChartCard() {
     }
 }
 
-
 @Composable
-fun TopConsumptionCard(inmuebles: List<Inmueble>) {
+fun TopConsumptionCard(inmuebles: List<InmuebleItem>) {
+    val numberFormat = NumberFormat.getNumberInstance(Locale("es", "MX"))
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "Inmuebles con Mayor Consumo",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = DarkText
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            Text("Inmuebles con Mayor Consumo", fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Encabezados de la tabla
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "POS.",
-                    modifier = Modifier.weight(0.15f),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "NOMBRE INMUEBLE",
-                    modifier = Modifier.weight(0.55f),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "CONSUMO",
-                    modifier = Modifier.weight(0.3f),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.End
-                )
-            }
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-            // Lista de inmuebles
-            inmuebles.forEachIndexed { index, inmueble ->
+            inmuebles.forEachIndexed { index, item ->
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "${index + 1}",
-                        modifier = Modifier.weight(0.15f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = DarkText,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = inmueble.nombre,
-                        modifier = Modifier.weight(0.55f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = DarkText
-                    )
-                    Text(
-                        text = inmueble.consumo,
-                        modifier = Modifier.weight(0.3f),
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.End,
-                        color = DarkText
-                    )
+                    Text(text = "${index + 1}", modifier = Modifier.width(30.dp), fontWeight = FontWeight.Bold, color = PgeChartBlue)
+                    Text(text = item.nombre_edificio, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    Text(text = "${numberFormat.format(item.consumo)} kWh", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
+                if (index < inmuebles.lastIndex) Divider(color = Color.LightGray, thickness = 0.5.dp)
             }
         }
     }
