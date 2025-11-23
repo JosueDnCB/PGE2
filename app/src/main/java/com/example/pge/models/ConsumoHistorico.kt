@@ -5,7 +5,6 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-// --- 1. Data Models (Coinciden con tu JSON de Laravel) ---
 
 data class DashboardResponse(
     val status: String,
@@ -53,7 +52,7 @@ interface PgeApiService {
     ): DashboardResponse
 }
 
-// --- 3. Singleton de Retrofit (Simple) ---
+// --- 3. Singleton de Retrofit (Simple)git ---
 
 object RetrofitClient {
     // Nota: 10.0.2.2 es localhost para el emulador de Android.

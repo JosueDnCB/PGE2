@@ -16,9 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.pge.models.UserResponse
@@ -26,15 +28,25 @@ import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.GrayCard
 import com.example.pge.ui.theme.PgeBulletGreen
 import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.viewmodels.AnalisisUiState
+import com.example.pge.viewmodels.AnalisisViewModel
+import com.example.pge.viewmodels.AnalisisViewModelFactory
+import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractiva
 
 @Composable
 fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, usuario: UserResponse?) {
 
     // Estado para controlar la visibilidad del diálogo
     var showLoginDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    // AQUI CREAMOS EL VIEWMODEL CORRECTAMENTE USANDO LA FACTORY
+    // Esto inyecta el contexto y el token automáticamente
+    val viewModel: AnalisisViewModel = viewModel(
+        factory = AnalisisViewModelFactory(context)
+    )
 
     // Estado para saber si el usuario inició sesión
-
     Scaffold(
         topBar = {
             PgeTopAppBar(
@@ -66,7 +78,7 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
 
             // 3. Tarjeta de Predicción de Gasto
             item {
-                PrediccionGastoCard()
+                PrediccionGastoCard(viewModel = viewModel)
             }
 
             // 4. Tarjeta de Comparativa de Consumo
@@ -222,7 +234,12 @@ fun DropdownFiltro(
 }
 
 @Composable
-fun PrediccionGastoCard() {
+fun PrediccionGastoCard(
+    viewModel: AnalisisViewModel
+) {
+    // Recolectamos el estado del ViewModel que nos pasaron
+    val uiState by viewModel.uiState.collectAsState()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -233,40 +250,58 @@ fun PrediccionGastoCard() {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Predicción de Gasto para los Próximos 6 Meses",
+                text = "Predicción de Gasto (Próximos Meses)",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
 
-            // PLACEHOLDER PARA LA GRÁFICA
-            // Aquí debes reemplazar este Box con tu componente de gráfica (de Vico, MPAndroidChart, etc.)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(GrayCard.copy(alpha = 0.5f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Placeholder: Gráfica de Línea",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            // Contenido dinámico según estado
+            when (val state = uiState) {
+                is AnalisisUiState.Loading -> {
+                    Box(modifier = Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                is AnalisisUiState.Error -> {
+                    Box(modifier = Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
+                        Text("Error: ${state.message}", color = Color.Red)
+                    }
+                }
+                is AnalisisUiState.Success -> {
+                    val datos = state.data.datosGrafica
+                    val resumen = state.data.resumen
 
-            // Leyenda (simplificada)
-            Column {
-                Text("Interpretación:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                Text(
-                    "La predicción muestra una tendencia al alza en el gasto energético. El área sombreada representa el intervalo de confianza del 95% para las proyecciones.",
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                    // AQUI LLAMAMOS A LA GRÁFICA PERSONALIZADA
+                    GraficaProyeccionInteractiva(
+                        datos = datos,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp) // Un poco más alto para el tooltip
+                            .padding(vertical = 8.dp)
+                    )
+
+                    // Leyenda dinámica basada en datos reales
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFF1F8E9), RoundedCornerShape(4.dp))
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "Interpretación (${resumen.tendencia}):",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Se proyecta un total de $${String.format("%,.2f", resumen.costoTotalProyectado)} en los próximos ${resumen.horizonteMeses} meses. El área verde indica el margen de error posible.",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
             }
         }
     }
 }
-
 @Composable
 fun ComparativaConsumoCard() {
     Card(
