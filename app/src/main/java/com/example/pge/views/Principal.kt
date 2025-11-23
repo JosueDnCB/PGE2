@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pge.models.UserResponse
 import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.PgeApiGetBg
 import com.example.pge.ui.theme.PgeBulletGreen
@@ -35,6 +36,7 @@ import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.ui.theme.PgeProgressBarBg
 import com.example.pge.ui.theme.PgeTagBg
 import com.example.pge.ui.theme.PgeTagText
+import com.example.pge.viewmodels.LoginViewModel
 import kotlin.random.Random
 
 /*
@@ -42,52 +44,44 @@ import kotlin.random.Random
 */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PgeHomeScreen(navController: NavController,
-                  isLoggedIn: Boolean,
-                  onLoginSuccess: () -> Unit // Recibe la lambda
-    ) {
+fun PgeHomeScreen(
+    navController: NavController,
+    loginViewModel: LoginViewModel,
+    isLoggedIn: Boolean,
+    usuarios: UserResponse?,              // 👈 agregamos el usuario
+    onLoginSuccess: () -> Unit
+) {
 
     // Estado para controlar la visibilidad del diálogo
     var showLoginDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-        topBar = { PgeTopAppBar(
-            isLoggedIn = isLoggedIn,
-            onShowLoginClick = {
-                showLoginDialog = true
-            }) },
-        containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
+        topBar = {
+            PgeTopAppBar(
+                isLoggedIn = isLoggedIn,
+                usuarios = usuarios,             // 👈 pasamos el usuario al top bar
+                onShowLoginClick = { showLoginDialog = true }
+            )
+        },
+        containerColor = Color(0xFFF8FAFC)
     ) { paddingValues ->
 
-        // Si showLoginDialog es true, dibuja el LoginDialog
         if (showLoginDialog) {
             LoginDialog(
-                onDismissRequest = {
-                    // Cierra el diálogo si se toca fuera o se presiona "X"
-                    showLoginDialog = false
-                },
-                onLoginClick = { email, pass ->
-                    // 1. (Opcional) Aquí validas el email y password...
-                    // if (viewModel.login(email, pass)) { ... }
-
-                    // 2. Actualizas los estados
-                    // 3. SE LLAMA A LA LAMBDA DEL PADRE
-                    onLoginSuccess()
+                loginViewModel = loginViewModel, // 👈 pasa tu ViewModel aquí
+                onDismissRequest = { showLoginDialog = false },
+                onLoginSuccess = {
                     showLoginDialog = false
 
-                        //  NAVEGAR A DASHBOARD
-                        navController.navigate(NavRoutes.Dashboard.route) {
-                        // Esto limpia la pila de navegación para que el usuario
-                        // no pueda "volver" a la pantalla de login con el botón de atrás.
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
-                        }
-                        // Asegura que no se apilen múltiples copias de Principal
+                    // Navegar al Dashboard
+                    navController.navigate(NavRoutes.Dashboard.route) {
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         launchSingleTop = true
                     }
                 }
             )
         }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -99,26 +93,14 @@ fun PgeHomeScreen(navController: NavController,
             item {
                 HeroSection(
                     onExploreClick = {
-                        //  NAVEGAR A DASHBOARD
                         navController.navigate(NavRoutes.Dashboard.route) {
-                            // Esto limpia la pila de navegación para que el usuario
-                            // no pueda "volver" a la pantalla de login con el botón de atrás.
-                            popUpTo(navController.graph.startDestinationId) {
-                                inclusive = true
-                            }
-                            // Asegura que no se apilen múltiples copias de Principal
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
                             launchSingleTop = true
                         }
                     },
                     onTransparencyClick = {
-                        //  NAVEGAR A DASHBOARD
                         navController.navigate(NavRoutes.Transparencia.route) {
-                            // Esto limpia la pila de navegación para que el usuario
-                            // no pueda "volver" a la pantalla de login con el botón de atrás.
-                            popUpTo(navController.graph.startDestinationId) {
-                                inclusive = true
-                            }
-                            // Asegura que no se apilen múltiples copias de Principal
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
                             launchSingleTop = true
                         }
                     }
@@ -126,19 +108,13 @@ fun PgeHomeScreen(navController: NavController,
             }
 
             // Sección 2: Tarjetas de Dashboard
-            item {
-                DashboardPreviewSection()
-            }
+            item { DashboardPreviewSection() }
 
             // Sección 3: Objetivos
-            item {
-                ObjectivesSection()
-            }
+            item { ObjectivesSection() }
 
             // Sección 4: Interoperabilidad y API
-            item {
-                ApiSection()
-            }
+            item { ApiSection() }
         }
     }
 }
@@ -259,23 +235,23 @@ fun DashboardPreviewSection() {
     ) {
 
 
-            // Tarjeta de Gasto Total
-            StatCard(
-                title = "Gasto total",
-                value = "$3,640,000",
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                SimulatedBarChart()
-            }
+        // Tarjeta de Gasto Total
+        StatCard(
+            title = "Gasto total",
+            value = "$3,640,000",
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SimulatedBarChart()
+        }
 
-            // Tarjeta de Consumo kWh
-            StatCard(
-                title = "Consumo kWh",
-                value = "161,000",
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                SimulatedBarChart()
-            }
+        // Tarjeta de Consumo kWh
+        StatCard(
+            title = "Consumo kWh",
+            value = "161,000",
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            SimulatedBarChart()
+        }
 
 
         // Fila 2: Costo promedio
@@ -474,29 +450,5 @@ fun ApiEndpointItem(method: String, endpoint: String) {
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             )
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun PgeHomeScreenPreview() {
-    MaterialTheme {
-
-        // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
-        val navController = rememberNavController()
-        val isLoggedIn = false // Controlar el estado de inicio de sesión
-        PgeHomeScreen(
-            navController = navController,
-            isLoggedIn = isLoggedIn,
-            onLoginSuccess = {
-                // Esta lambda se ejecutará cuando el login sea exitoso
-
-                navController.navigate(NavRoutes.Dashboard.route) {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        )
     }
 }

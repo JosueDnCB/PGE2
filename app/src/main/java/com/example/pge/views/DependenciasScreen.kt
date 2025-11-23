@@ -1,10 +1,7 @@
 package com.example.pge.views
 
+import android.app.Application
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,38 +17,72 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import com.example.pge.navigation.NavRoutes
+import com.example.pge.viewmodels.DependenciasViewModel
+import com.example.pge.models.Dependencia
+import com.example.pge.models.UserResponse
+import com.example.pge.viewmodels.LoginViewModel
 
-data class Dependencia(
-    val nombre: String,
-    val categoria: String,
-    val numEdificios: Int,
-)
+@Composable
+fun DependenciasScreenConnected(
+    navController: NavController,
+    loginViewModel: LoginViewModel,
+    isLoggedIn: Boolean,
+    usuario: UserResponse?,
+    onLoginSuccess: () -> Unit
+) {
+    var showLoginDialog by remember { mutableStateOf(!isLoggedIn) }
 
+    if (showLoginDialog) {
+        LoginDialog(
+            loginViewModel = loginViewModel,
+            onDismissRequest = { showLoginDialog = false },
+            onLoginSuccess = {
+                showLoginDialog = false
+                onLoginSuccess()
+            }
+        )
+    }
+
+    if (isLoggedIn) {
+        val context = LocalContext.current.applicationContext as Application
+        val viewModel = remember { DependenciasViewModel(context) }
+        val dependencias by viewModel.dependencias.collectAsState()
+
+        LaunchedEffect(Unit) {
+            viewModel.cargarDependencias()
+        }
+
+        DependenciasScreen(
+            navController = navController,
+            isLoggedIn = isLoggedIn,
+            dependencias = dependencias,
+            usuario = usuario,
+            onLoginSuccess = onLoginSuccess
+        )
+    }
+}
 
 @Composable
 fun DependenciasScreen(
     navController: NavController,
     isLoggedIn: Boolean,
     dependencias: List<Dependencia>,
+    usuario: UserResponse?,
     onLoginSuccess: () -> Unit
 ) {
-
     var showDialog by remember { mutableStateOf(false) }
 
-    // Mostrar modal
     if (showDialog) {
         NewDependenciaDialog(
             onDismissRequest = { showDialog = false },
             onSave = { nombre, categoria, edificios ->
-                // Aquí podrás guardar en ViewModel o backend
+                // Aquí podrías llamar a ViewModel para guardar en backend
                 println("Nueva dependencia: $nombre, $categoria, $edificios")
                 showDialog = false
             }
@@ -63,6 +94,7 @@ fun DependenciasScreen(
             PgeTopAppBar(
                 isLoggedIn = isLoggedIn,
                 titulo = "Dependencias",
+                usuarios = usuario,
                 onShowLoginClick = { }
             )
         },
@@ -99,9 +131,6 @@ fun DependenciasScreen(
                 }
             }
 
-            // -------------------------
-            // TABLA DE DEPENDENCIAS
-            // -------------------------
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -110,7 +139,6 @@ fun DependenciasScreen(
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
 
-                        // Encabezado tabla
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -165,7 +193,7 @@ fun DependenciasScreen(
                                             .background(Color(0xFFF5F5F5))
                                             .padding(8.dp)
                                     ) {
-                                        Text("Edificios: ${dependencia.numEdificios}")
+                                        Text("Edificios: ${dependencia.edificios}")
                                     }
                                 }
 
@@ -179,7 +207,6 @@ fun DependenciasScreen(
     }
 }
 
-
 //Modal para agregar dependencias
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -191,18 +218,10 @@ fun NewDependenciaDialog(
     var categoria by remember { mutableStateOf("") }
     var edificios by remember { mutableStateOf("") }
 
-    // Estados para Dropdown
     var expanded by remember { mutableStateOf(false) }
     val categorias = listOf(
-        "Gubernamental",
-        "Educación",
-        "Salud",
-        "Infraestructura",
-        "Seguridad",
-        "Transporte",
-        "Finanzas",
-        "Cultura",
-        "Deporte"
+        "Gubernamental", "Educación", "Salud", "Infraestructura", "Seguridad",
+        "Transporte", "Finanzas", "Cultura", "Deporte"
     )
 
     Dialog(
@@ -218,25 +237,19 @@ fun NewDependenciaDialog(
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
 
-                // Header
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Agregar Dependencia",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
+                    Text("Agregar Dependencia", style = MaterialTheme.typography.titleLarge)
                     IconButton(onClick = onDismissRequest) {
                         Icon(Icons.Default.Close, contentDescription = "Cerrar")
                     }
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 12.dp))
+                Divider(Modifier.padding(vertical = 12.dp))
 
-                // Campo Nombre
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
@@ -256,9 +269,7 @@ fun NewDependenciaDialog(
                         onValueChange = {},
                         readOnly = true,
                         label = { Text("Categoría") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                         modifier = Modifier
                             .menuAnchor()
                             .fillMaxWidth(),
@@ -283,7 +294,6 @@ fun NewDependenciaDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Campo Edificios
                 OutlinedTextField(
                     value = edificios,
                     onValueChange = { edificios = it },
@@ -294,19 +304,15 @@ fun NewDependenciaDialog(
 
                 Spacer(Modifier.height(22.dp))
 
-                // Botones
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    Button(
-                        onClick = onDismissRequest,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)
-                    ) {
+                    Button(onClick = onDismissRequest, colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray)) {
                         Text("Cancelar")
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(Modifier.width(8.dp))
 
                     Button(
                         onClick = { onSave(nombre, categoria, edificios) },
@@ -317,36 +323,5 @@ fun NewDependenciaDialog(
                 }
             }
         }
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun DependenciaScreenPreview() {
-    MaterialTheme {
-
-        // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
-        val navController = rememberNavController()
-        val isLoggedIn = false // Controlar el estado de inicio de sesión
-
-        DependenciasScreen(
-            navController,
-            isLoggedIn,
-            listOf<Dependencia>(
-                Dependencia("Secretaría de Finanzas", "Administrativa", 8),
-                Dependencia("Secretaría de Educación", "Educativa", 12),
-                Dependencia("Secretaría de Salud", "Salud", 6),
-                Dependencia("Secretaría de Infraestructura", "Obras", 10)
-            ),
-            onLoginSuccess = {
-                // Esta lambda se ejecutará cuando el login sea exitoso
-
-                navController.navigate(NavRoutes.Dashboard.route) {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                    launchSingleTop = true
-                }
-            }
-        )
     }
 }

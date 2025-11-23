@@ -20,10 +20,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pge.models.DashboardResponse
 import com.example.pge.models.InmuebleItem
+import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.DarkText
 import com.example.pge.ui.theme.PgeChartBlue
 import com.example.pge.viewmodels.DashboardUiState
 import com.example.pge.viewmodels.DashboardViewModel
+import com.example.pge.viewmodels.LoginViewModel
 import java.text.NumberFormat
 import java.util.*
 import kotlin.random.Random
@@ -31,7 +33,9 @@ import kotlin.random.Random
 @Composable
 fun DashboardScreen(
     navController: NavController,
+    loginViewModel: LoginViewModel,
     isLoggedIn: Boolean,
+    usuario: UserResponse?,
     onLoginSuccess: () -> Unit,
     viewModel: DashboardViewModel = viewModel() // Inyectamos el ViewModel aquí
 ) {
@@ -44,8 +48,11 @@ fun DashboardScreen(
             PgeTopAppBar(
                  isLoggedIn = isLoggedIn,
                  titulo = "Dashboard",
-                 onShowLoginClick = { showLoginDialog = true }
-             )
+                usuarios = usuario,
+                onShowLoginClick = {
+                    onLoginSuccess() // si quieres disparar la acción de login
+                }
+            )
 
         },
         containerColor = Color(0xFFF8FAFC)
@@ -73,24 +80,6 @@ fun DashboardScreen(
                     // Renderizamos el contenido real con los datos de la API
                     DashboardContent(data = uiState.data)
                 }
-            }
-
-            // Login Dialog Logic (Se mantiene igual)
-            if (showLoginDialog) {
-                LoginDialog(
-                    onDismissRequest = {
-                        // Cierra el diálogo si se toca fuera o se presiona "X"
-                        showLoginDialog = false
-                    },
-                    onLoginClick = { email, pass ->
-                        // --- Aquí va tu lógica de inicio de sesión ---
-                        Log.d("Login", "Email: $email, Pass: $pass")
-                        // Si el login es exitoso:
-                        onLoginSuccess()
-                        showLoginDialog = false // Cierra el diálogo
-                    }
-                )
-
             }
         }
     }

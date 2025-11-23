@@ -47,8 +47,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.GrayTableTop
 import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.viewmodels.LoginViewModel
 import kotlin.collections.listOf
 
 
@@ -315,7 +317,7 @@ fun PreviewNewBudgetDialog() {
 
 
 @Composable
-fun PresupuestoScreen(navController: NavController, isLoggedIn: Boolean, onLoginSuccess: () -> Unit) {
+fun PresupuestoScreen(navController: NavController,loginViewModel: LoginViewModel,usuario: UserResponse?, isLoggedIn: Boolean, onLoginSuccess: () -> Unit) {
 
 
     // Datos de ejemplo
@@ -348,8 +350,9 @@ fun PresupuestoScreen(navController: NavController, isLoggedIn: Boolean, onLogin
             PgeTopAppBar(
                 isLoggedIn = isLoggedIn,
                 titulo = "Presupuesto",
+                usuarios = usuario,
                 onShowLoginClick = {
-                    // showLoginDialog = true
+                    onLoginSuccess() // si quieres disparar la acción de login
                 })
         },
         containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
@@ -709,18 +712,3 @@ fun PresupuestoScreen(navController: NavController, isLoggedIn: Boolean, onLogin
 
         )
     }
-
-
-
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun PresupuestoScreenPreview() {
-    MaterialTheme {
-
-        val navController = rememberNavController()
-
-        PresupuestoScreen(navController)
-    }
-}*/

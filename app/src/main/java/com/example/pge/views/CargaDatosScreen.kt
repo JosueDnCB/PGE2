@@ -27,6 +27,10 @@ import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,22 +40,36 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pge.models.UserResponse
 import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.viewmodels.LoginViewModel
 
 
 @Composable
-fun CargaConsumosScreen(navController: NavController, isLoggedIn: Boolean, onLoginSuccess: () -> Unit) {
+fun CargaConsumosScreen(
+    navController: NavController,
+    loginViewModel: LoginViewModel,
+    isLoggedIn: Boolean,
+    usuario: UserResponse?,
+    onLoginSuccess: () -> Unit
+) {
+    var showLoginDialog by remember { mutableStateOf(!isLoggedIn) }
+
     Scaffold(
-        topBar = { PgeTopAppBar(
-            isLoggedIn = isLoggedIn,
-            titulo = "Carga de Consumos",
-            onShowLoginClick = {
-                // showLoginDialog = true
-            }
-          ) },
-        containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
+        topBar = {
+            PgeTopAppBar(
+                isLoggedIn = isLoggedIn,
+                titulo = "Carga de Consumos",
+                usuarios = usuario,
+                onShowLoginClick = {
+                    onLoginSuccess() // si quieres disparar la acción de login
+                }
+            )
+        },
+        containerColor = Color(0xFFF8FAFC)
     ) { paddingValues ->
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -67,39 +85,28 @@ fun CargaConsumosScreen(navController: NavController, isLoggedIn: Boolean, onLog
                 ) {
                     Text(
                         text = "Carga de Consumos",
-                        textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
-                    )
-                }
-                Spacer(modifier = Modifier.height(3.dp))
-            }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Importa datos históricos de consumo energético desde archivos CSV o Excel",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
                     )
                 }
             }
 
             item {
+                Text(
+                    text = "Importa datos históricos de consumo energético desde archivos CSV o Excel",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+
+            item {
                 ElevatedCard(
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 6.dp
-                    ),
-                    modifier = Modifier
-                        .fillMaxSize()
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     Text(
-                        text = "Sube tu archivo de consumos en formato .CSV o .XSLX. Asegurarse de que las columnas coincidan con la platilla.",
-                        modifier = Modifier
-                            .padding(16.dp),
+                        text = "Sube tu archivo de consumos en formato .CSV o .XSLX. Asegurarse de que las columnas coincidan con la plantilla.",
+                        modifier = Modifier.padding(16.dp),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -135,7 +142,7 @@ fun CargaConsumosScreen(navController: NavController, isLoggedIn: Boolean, onLog
                             textAlign = TextAlign.Center
                         )
                         Button(
-                            onClick = { /* TODO: acción para subir archivo */ },
+                            onClick = { /* acción para subir archivo */ },
                             colors = ButtonDefaults.buttonColors(containerColor =  PgeGreenButton)
                         ) {
                             Icon(
@@ -150,27 +157,5 @@ fun CargaConsumosScreen(navController: NavController, isLoggedIn: Boolean, onLog
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CargaModulePreview() {
-
-    MaterialTheme {
-
-        val isLoggedIn = true
-        // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
-        val navController = rememberNavController()
-        CargaConsumosScreen(navController, isLoggedIn,
-            onLoginSuccess = {
-                // Esta lambda se ejecutará cuando el login sea exitoso
-                navController.navigate(NavRoutes.Dashboard.route) {
-                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                    launchSingleTop = true
-                }
-            })
-
-
     }
 }

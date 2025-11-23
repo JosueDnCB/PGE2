@@ -37,12 +37,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.GrayCard
 import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.viewmodels.LoginViewModel
 
 
 @Composable
-fun PerfilUsuarioScreen(navController: NavController, isLoggedIn: Boolean) {
+fun PerfilUsuarioScreen(navController: NavController,loginViewModel: LoginViewModel,usuario: UserResponse?, isLoggedIn: Boolean) {
 
     var showLoginDialog by remember { mutableStateOf(false) }
 
@@ -51,7 +53,9 @@ fun PerfilUsuarioScreen(navController: NavController, isLoggedIn: Boolean) {
             PgeTopAppBar(
                 isLoggedIn,
                 "Perfil de Usuario",
-                onShowLoginClick = { showLoginDialog = true }
+                usuarios = usuario,
+                onShowLoginClick = {
+                }
             )
         },
         containerColor = Color(0xFFF8FAFC)

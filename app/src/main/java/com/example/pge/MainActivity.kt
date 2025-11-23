@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,100 +22,143 @@ import com.example.pge.ui.theme.PGETheme
 import com.example.pge.views.AnalisisDashboardScreen
 import com.example.pge.views.CargaConsumosScreen
 import com.example.pge.views.DashboardScreen
-import com.example.pge.views.Dependencia
-import com.example.pge.views.DependenciasScreen
 import com.example.pge.views.DrawerScreen
 import com.example.pge.views.PgeHomeScreen
 import com.example.pge.views.PresupuestoScreen
 import com.example.pge.views.TransparencyModuleCard
-import kotlin.collections.listOf
 import androidx.core.view.WindowCompat
+import com.example.pge.viewmodels.LoginViewModel
+import com.example.pge.views.DependenciasScreenConnected
 import com.example.pge.views.PerfilUsuarioScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // El sistema dibujará detrás de las barras del sistema
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
             PGETheme {
+
                 val navController = rememberNavController()
-                // Aquí es donde obtendrías tu estado real, por ejemplo:
-                // val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
 
-                // Estado para saber si el usuario inició sesión
-                var isLoggedIn by remember { mutableStateOf(false) }
+                // ⬅️ Agregamos el LoginViewModel
+                val loginViewModel = remember { LoginViewModel(this) }
 
+                // Estado del login
+                val isLoggedIn by loginViewModel.isLoggedIn.collectAsState()
+                val usuarioLogin by loginViewModel.usuario.collectAsState()
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Scaffold( bottomBar = {
-                        DrawerScreen(
-                          navController,
-                          isLoggedIn = isLoggedIn
-                        ) }) { innerPadding ->
+                    Scaffold(
+                        bottomBar = {
+                            DrawerScreen(
+                                navController = navController,
+                                isLoggedIn = isLoggedIn
+                            )
+                        }
+                    ) { innerPadding ->
+
                         NavHost(
                             navController = navController,
                             startDestination = NavRoutes.Principal.route,
                             modifier = Modifier.padding(innerPadding)
                         ) {
+
                             composable(NavRoutes.Dashboard.route) {
                                 DashboardScreen(
                                     navController = navController,
+                                    loginViewModel = loginViewModel,   // 👈 SE AGREGA
                                     isLoggedIn = isLoggedIn,
+                                    usuario = usuarioLogin,      // ✔ se lo enviamos
                                     onLoginSuccess = {
-                                        // Esta lambda se ejecutará cuando el login sea exitoso
-                                        isLoggedIn = true
+                                        loginViewModel.getUser()
                                         navController.navigate(NavRoutes.Dashboard.route) {
                                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                             launchSingleTop = true
                                         }
                                     }
-                                    )
+                                )
                             }
+
                             composable(NavRoutes.Principal.route) {
                                 PgeHomeScreen(
                                     navController = navController,
+                                    loginViewModel = loginViewModel,   // 👈 SE AGREGA
                                     isLoggedIn = isLoggedIn,
+                                    usuarios = usuarioLogin, // 👈 usuario real o null si no hay
                                     onLoginSuccess = {
-                                        // Esta lambda se ejecutará cuando el login sea exitoso
-                                        isLoggedIn = true
+                                        // Actualiza el usuario en tu ViewModel
+                                        loginViewModel.getUser()
+                                        // Navega al dashboard
                                         navController.navigate(NavRoutes.Dashboard.route) {
                                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                             launchSingleTop = true
                                         }
                                     }
-                            ) }
+                                )
+                            }
+
+
+
+
                             composable(NavRoutes.Transparencia.route) {
                                 TransparencyModuleCard(
+                                    navController = navController
+                                )
+                            }
+
+                            composable(NavRoutes.Analisis.route) {
+                                AnalisisDashboardScreen(
                                     navController = navController,
                                     isLoggedIn = isLoggedIn,
-                                    onLoginSuccess = {
-                                        // Esta lambda se ejecutará cuando el login sea exitoso
-                                        isLoggedIn = true
-                                        navController.navigate(NavRoutes.Dashboard.route) {
-                                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                            launchSingleTop = true
-                                        }
-                                    }
-                                ) }
-                            composable(NavRoutes.Analisis.route) { AnalisisDashboardScreen(navController, isLoggedIn) }
+                                    usuario = usuarioLogin,      // ✔ se lo enviamos
+                                )
+                            }
+
                             composable(NavRoutes.Dependencias.route) {
-                                DependenciasScreen(
-                                    navController,
+                                DependenciasScreenConnected(
+                                    navController = navController,
+                                    loginViewModel = loginViewModel,
                                     isLoggedIn = isLoggedIn,
-                                    listOf<Dependencia>(
-                                        Dependencia("Secretaría de Finanzas", "Administrativa", 8),
-                                        Dependencia("Secretaría de Educación", "Educativa", 12),
-                                        Dependencia("Secretaría de Salud", "Salud", 6),
-                                        Dependencia("Secretaría de Infraestructura", "Obras", 10)
-                                    ),
+                                    usuario = usuarioLogin,      // ✔ se lo enviamos
                                     onLoginSuccess = {
-                                        // Esta lambda se ejecutará cuando el login sea exitoso
-                                        isLoggedIn = true
+                                        loginViewModel.getUser()
+                                        navController.navigate(NavRoutes.Dependencias.route) {
+                                            popUpTo(NavRoutes.Principal.route) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable(NavRoutes.CargaConsumos.route) {
+                                CargaConsumosScreen(
+                                    navController = navController,
+                                    loginViewModel = loginViewModel,   // 👈 SE AGREGA
+                                    isLoggedIn = isLoggedIn,
+                                    usuario = usuarioLogin,
+                                    onLoginSuccess = {
+                                        loginViewModel.getUser()
+                                        navController.navigate(NavRoutes.Dependencias.route) {
+                                            popUpTo(NavRoutes.Principal.route) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable(NavRoutes.Presupuestos.route) {
+                                PresupuestoScreen(
+                                    navController = navController,
+                                    loginViewModel = loginViewModel, // 👈 SE AGREGA
+                                    usuario = usuarioLogin,
+                                    isLoggedIn = isLoggedIn,
+                                    onLoginSuccess = {
+                                        loginViewModel.getUser()
                                         navController.navigate(NavRoutes.Dashboard.route) {
                                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                             launchSingleTop = true
@@ -122,30 +166,15 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
-                            composable(NavRoutes.CargaConsumos.route) { CargaConsumosScreen(navController,
-                                isLoggedIn = isLoggedIn,
-                                onLoginSuccess = {
-                                    // Esta lambda se ejecutará cuando el login sea exitoso
-                                    isLoggedIn = true
-                                    navController.navigate(NavRoutes.Dashboard.route) {
-                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                }
+
+                            composable(NavRoutes.Usuarios.route) {
+                                PerfilUsuarioScreen(
+                                    navController = navController,
+                                    loginViewModel = loginViewModel,   // 👈 SE AGREGA
+                                    usuario = usuarioLogin,
+                                    isLoggedIn = isLoggedIn
                                 )
                             }
-                            composable(NavRoutes.Presupuestos.route) {PresupuestoScreen(
-                                navController,
-                                isLoggedIn = isLoggedIn,
-                                onLoginSuccess = {
-                                    // Esta lambda se ejecutará cuando el login sea exitoso
-                                    isLoggedIn = true
-                                    navController.navigate(NavRoutes.Dashboard.route) {
-                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                })}
-                            composable(NavRoutes.Usuarios.route) {PerfilUsuarioScreen(navController, isLoggedIn) }
                         }
                     }
                 }
@@ -153,4 +182,5 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 

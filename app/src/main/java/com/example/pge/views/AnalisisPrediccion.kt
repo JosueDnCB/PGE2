@@ -21,27 +21,28 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pge.models.UserResponse
+import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.GrayCard
 import com.example.pge.ui.theme.PgeBulletGreen
 import com.example.pge.ui.theme.PgeGreenButton
 
 @Composable
-fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean) {
+fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, usuario: UserResponse?) {
 
     // Estado para controlar la visibilidad del diálogo
     var showLoginDialog by remember { mutableStateOf(false) }
 
     // Estado para saber si el usuario inició sesión
-    var isLoggedIn by remember { mutableStateOf(true) }
 
     Scaffold(
         topBar = {
             PgeTopAppBar(
-                isLoggedIn,
-                "Analisis y predicción",
-                onShowLoginClick = {
-                    showLoginDialog = true
-                })
+                isLoggedIn = isLoggedIn,
+                titulo = "Análisis y predicción",
+                usuarios = usuario,
+                onShowLoginClick = { showLoginDialog = true }
+            )
         },
         containerColor = Color(0xFFF8FAFC) // Un fondo gris muy claro
     ) { paddingValues ->
@@ -439,22 +440,6 @@ fun ColorBox(color: Color) {
                 RoundedCornerShape(4.dp)
             )
     )
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun AnalisisModulePreview() {
-
-    MaterialTheme {
-
-        val isLoggedIn = false
-        // Fondo gris claro para que la tarjeta blanca resalte, como en tu imagen
-        val NavController = rememberNavController()
-        AnalisisDashboardScreen(NavController, isLoggedIn)
-
-
-    }
 }
 
 

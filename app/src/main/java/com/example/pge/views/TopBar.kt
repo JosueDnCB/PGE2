@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.DarkText
 import com.example.pge.ui.theme.PgeButtonText
 import com.example.pge.ui.theme.PgeGreenButton
@@ -45,42 +46,29 @@ import com.example.pge.ui.theme.Purple
 fun PgeTopAppBar(
     isLoggedIn: Boolean,
     titulo: String? = "",
-    // Parámetros para el email y la inicial del usuario
-    userEmail: String? = "josue_dan7@outlook.com",
-    userInitial: String? = "J",
+    usuarios: UserResponse?,             // 👈 recibimos el usuario real
     onShowLoginClick: () -> Unit
 ) {
 
+    // Extraer email e inicial
+    val userEmail = usuarios?.email ?: ""
+    val userInitial = usuarios?.nombre?.firstOrNull()?.uppercase() ?: ""
 
-    //  Definir el TÍTULO dinámicamente
+    // Título dinámico
     val titleComposable: @Composable () -> Unit = {
-        if (isLoggedIn) {
-            // Estado "Logged In"
-            Column(modifier = Modifier.padding(start = 8.dp)) {
+        Column(modifier = Modifier.padding(start = 8.dp)) {
             Text(
-
-                text = titulo?:"PGE-QROO",
+                text = titulo ?: "PGE-QROO",
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = DarkText
-            )}
-        } else {
-            // Estado "Logged Out": Muestra el título original
-            Column(modifier = Modifier.padding(start = 8.dp)) {
-                Text(
-                    text = "PGE-QROO",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = DarkText
-                )
-            }
+            )
         }
     }
 
-    //  Definir el ÍCONO DE NAVEGACIÓN dinámicamente
+    // Ícono navegación si no está logueado
     val navIconComposable: @Composable () -> Unit = {
         if (!isLoggedIn) {
-            // Solo muestra el logo si NO está logueado
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = "Logo PGE",
@@ -88,91 +76,85 @@ fun PgeTopAppBar(
                 modifier = Modifier
                     .padding(start = 12.dp)
                     .size(28.dp)
-                    .background(PgeButtonText.copy(alpha = 0.2f), CircleShape)
                     .clip(CircleShape)
                     .background(PgeGreenButton)
                     .padding(4.dp)
             )
         }
-        // Si está logueado, no se muestra nada
     }
 
-    // Definir las ACCIONES dinámicamente
+    // Acciones en el lado derecho
     val actionsComposable: @Composable RowScope.() -> Unit = {
-        if (isLoggedIn) {
-            //  Estado "Logged In"
+
+        if (isLoggedIn && usuarios != null) {
+
             Column(
-                // horizontalAlignment = Alignment.End alinea todo a la derecha
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.padding(end = 12.dp)
             ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(end = 12.dp)
-            ) {
-                Spacer(Modifier.width(8.dp))
-
-                // Etiqueta "Admin" o tipo de usuario
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = Color(0xFFEEF2FF) // Fondo gris/azul pálido
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Admin",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Purple, // Texto azul/morado
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
 
-                // Avatar con la inicial
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(PgeGreenButton), // Color verde de tu app
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = userInitial ?: "",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color(0xFFEEF2FF)
+                    ) {
+                        Text(
+                            text = "Admin",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Purple,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+
+                    // Avatar verde
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(PgeGreenButton),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = userInitial,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
-             }
-                // Espacio vertical entre la fila de arriba y el correo
+
                 Spacer(Modifier.height(4.dp))
 
-                // Texto de Email (abajo)
+                // Email debajo
                 Text(
-                    text = userEmail ?: "Correo del usuario",
+                    text = userEmail,
                     fontSize = 12.sp,
                     color = DarkText
                 )
+
             }
+
         } else {
-            // Estado "Logged Out"
             Button(
-                onClick = {
-                    onShowLoginClick()
-                },
+                onClick = onShowLoginClick,
                 colors = ButtonDefaults.buttonColors(containerColor = PgeGreenButton),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.padding(end = 12.dp)
             ) {
-                Text("Acceso servidores públicos",
+                Text(
+                    "Acceso servidores públicos",
                     fontSize = 12.sp,
-                    color = PgeButtonText)
+                    color = PgeButtonText
+                )
             }
         }
     }
-    // Modal de inicio de sesión
 
-
-    // Construir el TopAppBar
     TopAppBar(
         title = titleComposable,
         navigationIcon = navIconComposable,
@@ -180,15 +162,12 @@ fun PgeTopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color.White
         ),
-        // Modificador para la línea inferior
         modifier = Modifier.drawBehind {
-            val strokeWidth = 1.dp.toPx()
-            val color = Color.LightGray
             drawLine(
-                color = color,
-                start = Offset(0f, size.height), // Esquina inferior izquierda
-                end = Offset(size.width, size.height), // Esquina inferior derecha
-                strokeWidth = strokeWidth
+                color = Color.LightGray,
+                start = Offset(0f, size.height),
+                end = Offset(size.width, size.height),
+                strokeWidth = 1.dp.toPx()
             )
         }
     )

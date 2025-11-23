@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.viewmodels.LoginViewModel
 
 
 val PgeLoginButtonGreen = Color(0xFFA0CBBF)
@@ -28,24 +29,24 @@ val PgeLoginButtonGreen = Color(0xFFA0CBBF)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginDialog(
+    loginViewModel: LoginViewModel,
     onDismissRequest: () -> Unit,
-    onLoginClick: (email: String, pass: String) -> Unit
+    onLoginSuccess: () -> Unit
 ) {
-    // Estado interno para guardar lo que escribe el usuario
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onDismissRequest) {
         Card(
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
-                modifier = Modifier.padding(24.dp), // Más padding para que se vea espaciado
+                modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                //  Título y Botón de cerrar ---
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -55,8 +56,6 @@ fun LoginDialog(
                         text = "Acceso para servidores públicos",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        // El modifier.weight(1f) asegura que el texto se ajuste
-                        // si es muy largo, sin empujar al ícono
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     IconButton(onClick = onDismissRequest) {
@@ -64,55 +63,58 @@ fun LoginDialog(
                     }
                 }
 
-                // subtítulo
                 Text(
                     text = "Inicia sesión con tu correo institucional.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                // Campos del Formulario
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    // Campo de Correo
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
                         label = { Text("Correo electrónico") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        singleLine = true
                     )
 
-                    // Campo de Contraseña
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                        visualTransformation = PasswordVisualTransformation()
                     )
                 }
 
-                // Botón "Entrar"
+                if (error.isNotEmpty()) {
+                    Text(error, color = Color.Red)
+                }
+
                 Button(
-                    onClick = { onLoginClick(email, password) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp), // Un espacio extra arriba
-                    shape = RoundedCornerShape(8.dp),
+                    onClick = {
+                        loading = true
+                        error = ""
+
+                        loginViewModel.login(email, password) { success ->
+                            loading = false
+                            if (success) {
+                                onLoginSuccess()
+                            } else {
+                                error = "Credenciales incorrectas"
+                            }
+                        }
+                    },
+                    enabled = !loading,
+                    modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
-                       // containerColor = PgeLoginButtonGreen,
                         containerColor = PgeGreenButton,
-                        contentColor = Color.White // Tu imagen muestra texto blanco
+                        contentColor = Color.White
                     )
                 ) {
-                    Text(
-                        text = "Entrar",
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                    Text(if (loading) "Entrando..." else "Entrar")
                 }
             }
         }
