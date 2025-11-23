@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.*
-import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +29,6 @@ import com.example.pge.ui.theme.PgeBulletGreen
 import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.viewmodels.AnalisisUiState
 import com.example.pge.viewmodels.AnalisisViewModel
-import com.example.pge.viewmodels.AnalisisViewModelFactory
 import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractiva
 
 @Composable
@@ -40,11 +38,7 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
     var showLoginDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // AQUI CREAMOS EL VIEWMODEL CORRECTAMENTE USANDO LA FACTORY
-    // Esto inyecta el contexto y el token automáticamente
-    val viewModel: AnalisisViewModel = viewModel(
-        factory = AnalisisViewModelFactory(context)
-    )
+    val viewModel: AnalisisViewModel = viewModel()
 
     // Estado para saber si el usuario inició sesión
     Scaffold(

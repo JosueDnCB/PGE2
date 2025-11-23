@@ -1,16 +1,19 @@
 package com.example.pge.viewmodels
 
+import android.app.Application
 import android.content.Context
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.pge.data.network.analisisprediccion.PrediccionApiService
-import com.example.pge.data.network.analisisprediccion.RetrofitClientAnalisis
+import com.example.pge.data.network.analisisprediccion.RetrofitInstanceFastApi
 import com.example.pge.models.analisisprediccion.ProyeccionResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
 
 sealed class AnalisisUiState {
     object Loading : AnalisisUiState()
@@ -18,10 +21,14 @@ sealed class AnalisisUiState {
     data class Error(val message: String) : AnalisisUiState()
 }
 
-class AnalisisViewModel(private val apiService: PrediccionApiService) : ViewModel() {
+class AnalisisViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow<AnalisisUiState>(AnalisisUiState.Loading)
     val uiState: StateFlow<AnalisisUiState> = _uiState.asStateFlow()
+
+    // 2. Usamos getService pasando el contexto de la aplicación.
+    // getApplication() ya retorna el contexto global, es seguro contra fugas de memoria.
+    private val prediccionApi = RetrofitInstanceFastApi.getRetrofit(getApplication()).create(PrediccionApiService::class.java)
 
     private var mesesProyeccion = 6
     private var verHistorial = false
@@ -34,9 +41,7 @@ class AnalisisViewModel(private val apiService: PrediccionApiService) : ViewMode
         viewModelScope.launch {
             _uiState.value = AnalisisUiState.Loading
             try {
-                // CORRECCIÓN: Usar 'apiService' (la variable del constructor)
-                // en lugar de 'RetrofitClientAnalisis.apiService'.
-                val response = apiService.obtenerProyeccion(
+                val response = prediccionApi.obtenerProyeccion(
                     meses = mesesProyeccion,
                     verTodo = verHistorial
                 )
@@ -52,17 +57,5 @@ class AnalisisViewModel(private val apiService: PrediccionApiService) : ViewMode
     fun actualizarFiltros(meses: Int) {
         mesesProyeccion = meses
         cargarDatos()
-    }
-}
-
-class AnalisisViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(AnalisisViewModel::class.java)) {
-            // Aquí creamos el servicio pasando el contexto
-            val service = RetrofitClientAnalisis.getService(context)
-            @Suppress("UNCHECKED_CAST")
-            return AnalisisViewModel(service) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
