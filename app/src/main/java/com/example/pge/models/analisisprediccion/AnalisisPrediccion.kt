@@ -1,7 +1,6 @@
 package com.example.pge.models.analisisprediccion
 import com.google.gson.annotations.SerializedName
 
-// Respuesta principal de la API
 data class ProyeccionResponse(
     val status: String,
     val metodo: String,

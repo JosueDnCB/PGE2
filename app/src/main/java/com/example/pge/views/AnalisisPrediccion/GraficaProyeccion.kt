@@ -68,7 +68,7 @@ fun GraficaProyeccionInteractiva(
                 return (height - (ratio * height)).toFloat()
             }
 
-            // 1. DIBUJAR ÁREA DE CONFIANZA (Solo para predicciones)
+            //  DIBUJAR ÁREA DE CONFIANZA (Solo para predicciones)
             val pathRango = Path()
             var primerPuntoRango = true
 
@@ -105,7 +105,7 @@ fun GraficaProyeccionInteractiva(
             pathRango.close()
             drawPath(pathRango, colorRango)
 
-            // 2. DIBUJAR LÍNEAS (Real y Predicción)
+            // DIBUJAR LÍNEAS (Real y Predicción)
             val pathReal = Path()
             val pathPred = Path()
 
@@ -142,7 +142,7 @@ fun GraficaProyeccionInteractiva(
                 )
             )
 
-            // 3. DIBUJAR LÍNEA VERTICAL DE SELECCIÓN
+            // DIBUJAR LÍNEA VERTICAL DE SELECCIÓN
             puntoSeleccionado?.let { seleccionado ->
                 val index = datos.indexOf(seleccionado)
                 val x = index * pasoX
@@ -156,7 +156,7 @@ fun GraficaProyeccionInteractiva(
             }
         }
 
-        // 4. TOOLTIP (Ventana flotante)
+        // TOOLTIP (Ventana flotante)
         puntoSeleccionado?.let { dato ->
             TooltipInfo(
                 dato = dato,
@@ -165,7 +165,7 @@ fun GraficaProyeccionInteractiva(
         }
     }
 }
-
+// TOOLTIP (Ventana flotante)
 @Composable
 fun TooltipInfo(dato: DatoGrafica, modifier: Modifier = Modifier) {
     Card(

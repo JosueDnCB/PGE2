@@ -1,6 +1,6 @@
 package com.example.pge.views
 
-import android.R
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,19 +18,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.pge.models.UserResponse
-import com.example.pge.navigation.NavRoutes
+import com.example.pge.models.analisisprediccion.AccionEstrategica
 import com.example.pge.ui.theme.GrayCard
-import com.example.pge.ui.theme.PgeBulletGreen
 import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.viewmodels.AnalisisUiState
 import com.example.pge.viewmodels.AnalisisViewModel
+import com.example.pge.viewmodels.IaUiState
 import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractiva
+
+
 
 @Composable
 fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, usuario: UserResponse?) {
@@ -74,20 +75,14 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
             item {
                 PrediccionGastoCard(viewModel = viewModel)
             }
+            // 4. Tarjeta de Análisis Estratégico
+            item {
+                AnalisisEstrategicoCard(viewModel = viewModel)
+            }
 
-            // 4. Tarjeta de Comparativa de Consumo
+            // 5. Tarjeta de Comparativa de Consumo
             item {
                 ComparativaConsumoCard()
-            }
-
-            // 5. Tarjeta de Patrones de Consumo Mensual
-            item {
-                PatronesConsumoMensualCard()
-            }
-
-            // 6. Tarjeta de Intensidad y Patrón
-            item {
-                IntensidadConsumoCard()
             }
         }
     }
@@ -251,16 +246,19 @@ fun PrediccionGastoCard(
 
             // Contenido dinámico según estado
             when (val state = uiState) {
+                // Cargando
                 is AnalisisUiState.Loading -> {
                     Box(modifier = Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
+                // Mensaje de error
                 is AnalisisUiState.Error -> {
                     Box(modifier = Modifier.fillMaxWidth().height(250.dp), contentAlignment = Alignment.Center) {
                         Text("Error: ${state.message}", color = Color.Red)
                     }
                 }
+                //Se dibuja la gráfica
                 is AnalisisUiState.Success -> {
                     val datos = state.data.datosGrafica
                     val resumen = state.data.resumen
@@ -293,6 +291,167 @@ fun PrediccionGastoCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AnalisisEstrategicoCard(
+    viewModel: AnalisisViewModel
+) {
+    val iaState by viewModel.iaUiState.collectAsState()
+
+    Card(
+        modifier = Modifier.fillMaxWidth()
+            .animateContentSize() //  crezca suavemente
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Cabecera con Icono
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Psychology,
+                    contentDescription = "IA",
+                    tint = Color(0xFF6200EA) // Un color morado tipo "IA"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Consultoría Estratégica por IA",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            when (val state = iaState) {
+                is IaUiState.Idle -> {
+                    Text("Obtener un análisis cualitativo avanzado sobre tus proyecciones.")
+                    Button(
+                        onClick = { viewModel.cargarAnalisisEstrategico() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EA)),
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Generar Estrategias")
+                    }
+                }
+                is IaUiState.Loading -> {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF6200EA))
+                        Spacer(Modifier.height(8.dp))
+                        Text("Analizando datos con Gemini...", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                is IaUiState.Error -> {
+                    Text("No se pudo generar el reporte: ${state.message}", color = Color.Red)
+                    Button(onClick = { viewModel.cargarAnalisisEstrategico() }) { Text("Reintentar") }
+                }
+                is IaUiState.Success -> {
+                    val data = state.data
+
+                    // Título y Riesgo
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = data.titulo,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        BadgeRiesgo(nivel = data.nivelRiesgo)
+                    }
+
+                    // Resumen Ejecutivo
+                    Text(
+                        text = data.resumenEjecutivo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                        color = Color.DarkGray
+                    )
+
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                    Text(
+                        text = "Acciones Recomendadas:",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // Lista de Acciones
+                    // permitir que la tarjeta crezca lo necesario
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        data.acciones.forEach { accion ->
+                            ItemAccionEstrategica(accion)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BadgeRiesgo(nivel: String) {
+    val (colorFondo, texto) = when (nivel.uppercase()) {
+        "BAJO" -> Color(0xFFC8E6C9) to "Riesgo Bajo"
+        "MEDIO" -> Color(0xFFFFE0B2) to "Riesgo Medio"
+        "ALTO" -> Color(0xFFFFCDD2) to "Riesgo Alto"
+        else -> Color.LightGray to nivel
+    }
+
+    Surface(
+        color = colorFondo,
+        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier.padding(start = 8.dp)
+    ) {
+        Text(
+            text = texto,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+    }
+}
+
+@Composable
+fun ItemAccionEstrategica(item: AccionEstrategica) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .background(Color(0xFFF5F5F5), RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(text = "*", modifier = Modifier.padding(top = 2.dp))
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                text = item.accion,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = item.descripcion,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+            Text(
+                text = "Plazo: ${item.plazo}",
+                style = MaterialTheme.typography.labelSmall,
+                color = Color(0xFF6200EA),
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -358,7 +517,7 @@ fun ComparativaConsumoCard() {
         }
     }
 }
-
+/*
 @Composable
 fun PatronesConsumoMensualCard() {
     Card(
@@ -454,7 +613,7 @@ fun IntensidadConsumoCard() {
             }
         }
     }
-}
+}*/
 
 // Pequeño Composable de ayuda para los cuadros de color
 @Composable
