@@ -16,7 +16,7 @@ class AuthenticatorFastApi(private val tokenManager: TokenManager) : Interceptor
 
         // NOTA: Aquí NO agregamos el header "Host" forzado.
         // FastAPI (Uvicorn) maneja esto correctamente por sí solo en el puerto 8001.
-       // requestBuilder.addHeader("Host", "127.0.0.1:8001")
+        //requestBuilder.addHeader("Host", "127.0.0.1:8001")
         if (token != null) {
             requestBuilder.addHeader("Authorization", "Bearer $token")
         }

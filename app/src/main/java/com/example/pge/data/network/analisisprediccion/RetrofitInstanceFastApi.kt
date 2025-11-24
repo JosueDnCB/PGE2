@@ -32,7 +32,7 @@ object RetrofitInstanceFastApi {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl(BASE_URL_FASTAPI)
+            .baseUrl("http://10.0.2.2:8001/")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
