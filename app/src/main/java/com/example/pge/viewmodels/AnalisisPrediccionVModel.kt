@@ -28,31 +28,84 @@ sealed class IaUiState {
 
 class AnalisisViewModel(application: Application) : AndroidViewModel(application) {
 
+    // ESTADO PARA EL FILTRO DE RANGO DE FECHAS
+    // Estado para saber qué texto mostrar en el Dropdown
+    private val _rangoSeleccionado = MutableStateFlow("Últimos 12 meses")
+    val rangoSeleccionado = _rangoSeleccionado.asStateFlow()
+
+    // Guarda el valor real que se enviara al servidor
+    private var mesesProyeccion: Int = 6
+
+    // ESTADO PARA EL FILTRO DE HISTORIAL
+    // Para la UI Texto que se muestra en el Dropdown
+    private val _opcionHistorial = MutableStateFlow("Año actual")
+    val opcionHistorial = _opcionHistorial.asStateFlow()
+
+    // Para la API (Variable booleana interna)
+    private var verHistorial: Boolean = false
+
     private val _uiState = MutableStateFlow<AnalisisUiState>(AnalisisUiState.Loading)
     val uiState: StateFlow<AnalisisUiState> = _uiState.asStateFlow()
 
     private val _iaUiState = MutableStateFlow<IaUiState>(IaUiState.Idle)
     val iaUiState: StateFlow<IaUiState> = _iaUiState.asStateFlow()
 
+    // Función que llama la vista cuando el usuario elige algo
+    fun cambiarRangoFecha(nuevoRangoTexto: String) {
+
+        // Actualizamos lo que ve el usuario en el Dropdown
+        _rangoSeleccionado.value = nuevoRangoTexto
+
+        // Traducimos ese texto al número que la API entiende
+        mesesProyeccion = when (nuevoRangoTexto) {
+            "Últimos 12 meses" -> 12
+            "Últimos 6 meses" -> 6
+            "Último mes" -> 1
+            else -> 12
+        }
+
+        // Volvemos a pedir la proyección con el nuevo parametro
+        cargarAnalisisProyeccion()
+        // Volvemos a pedir las recomendaciones con el nuevo número
+        cargarAnalisisEstrategico()
+    }
+
+    fun cambiarRangoHistorial(nuevoRangoHistorialTexto: String) {
+
+        // Actualizamos la UI
+        _opcionHistorial.value = nuevoRangoHistorialTexto
+
+        // Traducimos Texto -> Boolean (y lo guardamos en verHistorial, NO en mesesProyeccion)
+        verHistorial = when (nuevoRangoHistorialTexto) {
+            "Todo el historial" -> true
+            "Año actual" -> false
+            else -> false
+        }
+
+        // Volvemos a pedir la proyección con el nuevo parametro
+        cargarAnalisisProyeccion()
+        // Volvemos a pedir las recomendaciones con el nuevo número
+        cargarAnalisisEstrategico()
+    }
 
     //  Usamos getRetrofit(getApplication()) pasando el contexto de la aplicación.
     // getApplication() ya retorna el contexto global, es seguro contra fugas de memoria.
     private val prediccionApi = RetrofitInstanceFastApi.getRetrofit(getApplication()).create(PrediccionApiService::class.java)
 
-    private var mesesProyeccion = 6
-    private var verHistorial = false
+
 
     init {
-        cargarDatos()
+        cargarAnalisisProyeccion()
     }
 
-    fun cargarDatos() {
+    fun cargarAnalisisProyeccion() {
         viewModelScope.launch {
             _uiState.value = AnalisisUiState.Loading
             try {
                 val response = prediccionApi.obtenerProyeccion(
                     meses = mesesProyeccion,
-                    verTodo = verHistorial
+                    verTodo = verHistorial,
+                    dependenciaId = 1
                 )
 
                 _uiState.value = AnalisisUiState.Success(response)
@@ -79,8 +132,9 @@ class AnalisisViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+
     fun actualizarFiltros(meses: Int) {
         mesesProyeccion = meses
-        cargarDatos()
+        cargarAnalisisProyeccion()
     }
 }

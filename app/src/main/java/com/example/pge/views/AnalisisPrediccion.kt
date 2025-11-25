@@ -18,9 +18,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.pge.models.UserResponse
 import com.example.pge.models.analisisprediccion.AccionEstrategica
 import com.example.pge.ui.theme.GrayCard
@@ -68,7 +70,7 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
 
             // 2. Tarjeta de Filtros
             item {
-                FiltrosCard()
+                FiltrosCard(viewModel = viewModel)
             }
 
             // 3. Tarjeta de Predicción de Gasto
@@ -109,7 +111,11 @@ fun TituloPrincipal() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FiltrosCard() {
+fun FiltrosCard(viewModel: AnalisisViewModel) {
+    // Observamos el valor actual del ViewModel
+    val rangoFechaActual by viewModel.rangoSeleccionado.collectAsState()
+    val rangoHistorialActual by viewModel.opcionHistorial.collectAsState()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -121,7 +127,7 @@ fun FiltrosCard() {
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp) // 3. Espacio entre ellos
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.CalendarMonth,
@@ -136,16 +142,44 @@ fun FiltrosCard() {
 
             // Dropdown de Rango de Fechas
             DropdownFiltro(
-                opciones = listOf("Últimos 12 meses", "Últimos 6 meses", "Último mes")
+                opciones = listOf("Últimos 12 meses", "Últimos 6 meses", "Último mes"),
+                // Le decimos qué mostrar
+                seleccionActual = rangoFechaActual,
+
+                // Le decimos qué hacer cuando cambia
+                onSeleccionChange = { nuevoValor ->
+                    viewModel.cambiarRangoFecha(nuevoValor)
+                }
             )
+
+            Text(
+                text = "Periodo del historial",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            // Dropdown de Categoría
+            DropdownFiltro(
+                opciones = listOf( "Todo el historial", "Año actual"),
+                // Le decimos qué mostrar
+                seleccionActual = rangoHistorialActual,
+
+                // Le decimos qué hacer cuando cambia
+                onSeleccionChange = { nuevoValor ->
+                    viewModel.cambiarRangoHistorial(nuevoValor)
+                }
+            )
+
+            /*// Obtener lista de dependencias desde la api que devuelba el id y nombre de cada una
             Text(
                 text = "Dependencia",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             DropdownFiltro(
+                // integrar ids de estas dependencias
                 opciones = listOf("Secretaría de Finanzas", "Secretaría de Educación", "Secretaría de Salud")
-            )
+            )*/
+            /*
             Text(
                 text = "Presupuestos",
                 style = MaterialTheme.typography.titleMedium,
@@ -154,7 +188,7 @@ fun FiltrosCard() {
             // Dropdown de Categoría
             DropdownFiltro(
                 opciones = listOf("Todas las Categorías", "Categoría A", "Categoría B")
-            )
+            )*/
         }
     }
 }
@@ -162,45 +196,49 @@ fun FiltrosCard() {
 @Composable
 fun DropdownFiltro(
     opciones: List<String>,
+    seleccionActual: String? = null,          // <--- RECIBE EL VALOR
+    onSeleccionChange: ((String) -> Unit)? = null, // <--- AVISA EL CAMBIO
     modifier: Modifier = Modifier,
-    label: String? = null, // <-- AQUI LA CLAVE: '?' y '= null' lo hacen opcional
-    icono: @Composable (() -> Unit)? = null // <-- El ícono también es opcional
+    label: String? = null,
+    icono: @Composable (() -> Unit)? = null
 ) {
-    // 1. Estado para saber si el menú está expandido o no
+
+    // Estado para saber si el menú está expandido o no
     var isExpanded by remember { mutableStateOf(false) }
 
-    // 2. Estado para guardar la opción seleccionada
+    // Estado para guardar la opción seleccionada
     var selectedOption by remember {
         mutableStateOf(opciones.getOrNull(0) ?: "")
     }
 
-    // 3. El contenedor principal del menú dropdown
+    // El contenedor principal del menú dropdown
     ExposedDropdownMenuBox(
         expanded = isExpanded,
         onExpandedChange = { isExpanded = !isExpanded },
         modifier = modifier
     ) {
 
-        // 4. El campo de texto que muestra la selección
-        OutlinedTextField(
+        // El campo de texto que muestra la selección
+        if (seleccionActual != null) {
+            OutlinedTextField(
+                value = seleccionActual, // USAR EL VALOR RECIBIDO
+                onValueChange = {}, // Vacío porque es de solo lectura
+                readOnly = true,
+                // --- Lógica del Label ---
+                // Si el label NO es nulo, lo mostramos.
+                label = label?.let { { Text(text = it) } },
+                leadingIcon = icono,
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
+                },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(), // Importante para anclar el menú
 
-            value = selectedOption,
-            onValueChange = {}, // Vacío porque es de solo lectura
-            readOnly = true,
-            // --- Lógica del Label ---
-            // Si el label NO es nulo, lo mostramos.
-            label = label?.let { { Text(text = it) } },
-            leadingIcon = icono,
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
-            },
-            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(), // Importante para anclar el menú
-
-        )
-        // 5. El menú que se despliega
+            )
+        }
+        // El menú que se despliega
         ExposedDropdownMenu(
             expanded = isExpanded,
             onDismissRequest = { isExpanded = false },
@@ -212,7 +250,9 @@ fun DropdownFiltro(
                         text = opcion
                     ) },
                     onClick = {
-                        selectedOption = opcion
+                        if (onSeleccionChange != null) {
+                            onSeleccionChange(opcion)
+                        }
                         isExpanded = false
                     }
 
