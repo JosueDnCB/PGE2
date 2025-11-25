@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pge.data.network.analisisprediccion.PrediccionApiService
 import com.example.pge.data.network.analisisprediccion.RetrofitInstanceFastApi
+import com.example.pge.models.Dependencia
 import com.example.pge.models.analisisprediccion.AnalisisIaContent
 import com.example.pge.models.analisisprediccion.ProyeccionResponse
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,8 +42,14 @@ class AnalisisViewModel(application: Application) : AndroidViewModel(application
     private val _opcionHistorial = MutableStateFlow("Año actual")
     val opcionHistorial = _opcionHistorial.asStateFlow()
 
-    // Para la API (Variable booleana interna)
     private var verHistorial: Boolean = false
+
+    // Variable para guardar el ID real que enviaremos a la API de predicción
+    private var dependenciaIdSeleccionada: Int? = null
+
+    // Variable para el texto de la UI
+    private val _opcionDependencia = MutableStateFlow("Dependencias")
+    val opcionDependencia = _opcionDependencia.asStateFlow()
 
     private val _uiState = MutableStateFlow<AnalisisUiState>(AnalisisUiState.Loading)
     val uiState: StateFlow<AnalisisUiState> = _uiState.asStateFlow()
@@ -88,6 +95,17 @@ class AnalisisViewModel(application: Application) : AndroidViewModel(application
         cargarAnalisisEstrategico()
     }
 
+    // Función simplificada: Ya recibe el ID listo
+    fun cambiarDependencia(id: Int?, nombre: String) {
+        _opcionDependencia.value = nombre
+        dependenciaIdSeleccionada = id
+
+        // Volvemos a pedir la proyección con el nuevo parametro
+        cargarAnalisisProyeccion()
+        // Volvemos a pedir las recomendaciones con el nuevo número
+        cargarAnalisisEstrategico()
+    }
+
     //  Usamos getRetrofit(getApplication()) pasando el contexto de la aplicación.
     // getApplication() ya retorna el contexto global, es seguro contra fugas de memoria.
     private val prediccionApi = RetrofitInstanceFastApi.getRetrofit(getApplication()).create(PrediccionApiService::class.java)
@@ -105,7 +123,7 @@ class AnalisisViewModel(application: Application) : AndroidViewModel(application
                 val response = prediccionApi.obtenerProyeccion(
                     meses = mesesProyeccion,
                     verTodo = verHistorial,
-                    dependenciaId = 1
+                    dependenciaId = dependenciaIdSeleccionada // usar el ID real de la dependencia seleccionada
                 )
 
                 _uiState.value = AnalisisUiState.Success(response)
@@ -123,7 +141,7 @@ class AnalisisViewModel(application: Application) : AndroidViewModel(application
                 val response = prediccionApi.obtenerEstrategia(
                     meses = mesesProyeccion,
                     verTodo = verHistorial,
-                    dependenciaId = 1 // usar el ID real de la dependencia seleccionada
+                    dependenciaId = dependenciaIdSeleccionada // usar el ID real de la dependencia seleccionada
                 )
                 _iaUiState.value = IaUiState.Success(response.analisisIa)
             } catch (e: Exception) {

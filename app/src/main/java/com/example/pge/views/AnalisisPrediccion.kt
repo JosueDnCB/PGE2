@@ -1,5 +1,6 @@
 package com.example.pge.views
 
+import android.app.Application
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,6 +32,8 @@ import com.example.pge.viewmodels.AnalisisUiState
 import com.example.pge.viewmodels.AnalisisViewModel
 import com.example.pge.viewmodels.IaUiState
 import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractiva
+import com.example.pge.viewmodels.DependenciasViewModel
+import com.example.pge.models.Dependencia
 
 
 
@@ -39,7 +42,9 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
 
     // Estado para controlar la visibilidad del diálogo
     var showLoginDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
+
+    val context = LocalContext.current.applicationContext as Application
+    val viewModelDespendencias = remember { DependenciasViewModel(context) }
 
     val viewModel: AnalisisViewModel = viewModel()
 
@@ -70,7 +75,7 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
 
             // 2. Tarjeta de Filtros
             item {
-                FiltrosCard(viewModel = viewModel)
+                FiltrosCard(viewModel = viewModel, viewModelDependencias = viewModelDespendencias)
             }
 
             // 3. Tarjeta de Predicción de Gasto
@@ -111,10 +116,49 @@ fun TituloPrincipal() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FiltrosCard(viewModel: AnalisisViewModel) {
+fun FiltrosCard(
+    viewModel: AnalisisViewModel,
+    viewModelDependencias: DependenciasViewModel
+) {
     // Observamos el valor actual del ViewModel
     val rangoFechaActual by viewModel.rangoSeleccionado.collectAsState()
     val rangoHistorialActual by viewModel.opcionHistorial.collectAsState()
+
+    // Estado de la UI (Texto seleccionado)
+    val textoSeleccionado by viewModel.opcionDependencia.collectAsState()
+
+    // Estado de Datos (Lista de objetos Dependencia: ID + Nombre)
+    val listaDependencias by viewModelDependencias.dependencias.collectAsState()
+
+    // PREPARAMOS LAS OPCIONES (Solo datos de la API)
+    // Ya no agregamos nada manual al principio
+    val opcionesDropdown = remember(listaDependencias) {
+        listaDependencias.map { it.nombre }
+    }
+
+    // Cargar datos de la API
+    LaunchedEffect(Unit) {
+        viewModelDependencias.cargarDependencias()
+    }
+
+    // AUTO SELECCIONAR EL PRIMER ELEMENTO
+    // Se ejecuta cada vez que la lista de dependencias cambia ( cuando la API responde)
+    LaunchedEffect(listaDependencias) {
+        if (listaDependencias.isNotEmpty()) {
+
+            // Tomamos el primer objeto COMPLETO (ID y Nombre) directamente de la lista
+            val primeraDependencia = listaDependencias[0]
+
+            // Solo actualizamos si lo que está seleccionado es diferente (para evitar bucles)
+            if (textoSeleccionado != primeraDependencia.nombre) {
+
+                 viewModel.cambiarDependencia(
+                    primeraDependencia.id,      // ID real (ej. 5)
+                    primeraDependencia.nombre   // Nombre real (ej. "Secretaría de Salud")
+                )
+            }
+        }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -169,16 +213,25 @@ fun FiltrosCard(viewModel: AnalisisViewModel) {
                 }
             )
 
-            /*// Obtener lista de dependencias desde la api que devuelba el id y nombre de cada una
+            // Obtener lista de dependencias desde la api que devuelba el id y nombre de cada una
             Text(
                 text = "Dependencia",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             DropdownFiltro(
-                // integrar ids de estas dependencias
-                opciones = listOf("Secretaría de Finanzas", "Secretaría de Educación", "Secretaría de Salud")
-            )*/
+                opciones = opcionesDropdown, // Lista pura
+                seleccionActual = textoSeleccionado,
+                onSeleccionChange = { nombreSeleccionado ->
+                    // Lógica cuando el usuario cambia manualmente
+                    val dep = listaDependencias.find { it.nombre == nombreSeleccionado }
+
+                    // Si por alguna razón no lo encuentra , no mandamos nada
+                    if (dep != null) {
+                        viewModel.cambiarDependencia(dep.id, dep.nombre)
+                    }
+                }
+            )
             /*
             Text(
                 text = "Presupuestos",
