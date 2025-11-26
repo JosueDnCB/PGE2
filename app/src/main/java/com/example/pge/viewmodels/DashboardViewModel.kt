@@ -7,9 +7,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pge.data.network.RetrofitInstance
-import com.example.pge.data.network.analisisprediccion.PrediccionApiService
 import com.example.pge.data.network.Dashboard.DashboardApi
 import com.example.pge.models.DashboardResponse
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.net.ConnectException
 
@@ -25,6 +26,24 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     // Estado observable por Compose
     var uiState: DashboardUiState by mutableStateOf(DashboardUiState.Loading)
 
+    // Variable para guardar el ID real que enviaremos a la API de predicción
+    private var dependenciaIdSeleccionada: Int? = null
+
+    // Variable para el texto de la UI
+    private val _opcionDependencia = MutableStateFlow("Dependencias")
+    val opcionDependencia = _opcionDependencia.asStateFlow()
+
+    // Función simplificada: Ya recibe el ID listo
+    fun cambiarDependencia(id: Int?, nombre: String) {
+        _opcionDependencia.value = nombre
+        dependenciaIdSeleccionada = id
+
+        // Volvemos a pedir la proyección con el nuevo parametro
+        fetchDashboardData()
+    }
+
+
+
     private val api = RetrofitInstance.getRetrofit(getApplication()).create(DashboardApi::class.java)
 
     init {
@@ -37,7 +56,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             uiState = DashboardUiState.Loading
             try {
                 // Llamada asíncrona a la API
-                val response = api.getDashboardData()
+                val response = api.getDashboardData(
+                dependenciaId = dependenciaIdSeleccionada
+                )
                 uiState = DashboardUiState.Success(response)
             } catch (e: ConnectException) {
                 uiState = DashboardUiState.Error("No se pudo conectar al servidor. Verifica tu conexión.")

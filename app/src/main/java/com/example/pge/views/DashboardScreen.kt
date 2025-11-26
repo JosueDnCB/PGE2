@@ -1,5 +1,6 @@
 package com.example.pge.views
 
+import android.app.Application
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,8 +23,11 @@ import com.example.pge.models.InmuebleItem
 import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.DarkText
 import com.example.pge.ui.theme.PgeChartBlue
+import com.example.pge.ui.theme.PgeGreenButton
+import com.example.pge.viewmodels.AnalisisViewModel
 import com.example.pge.viewmodels.DashboardUiState
 import com.example.pge.viewmodels.DashboardViewModel
+import com.example.pge.viewmodels.DependenciasViewModel
 import com.example.pge.viewmodels.LoginViewModel
 import java.text.NumberFormat
 import java.util.*
@@ -33,11 +38,14 @@ fun DashboardScreen(
     loginViewModel: LoginViewModel,
     isLoggedIn: Boolean,
     usuario: UserResponse?,
-    onLoginSuccess: () -> Unit,
-    viewModel: DashboardViewModel = viewModel()
+    onLoginSuccess: () -> Unit
 ) {
     var showLoginDialog by remember { mutableStateOf(false) }
+
+    val viewModel: DashboardViewModel = viewModel()
     val uiState = viewModel.uiState
+
+    val nombreDependencia by viewModel.opcionDependencia.collectAsState()
 
     Scaffold(
         topBar = {
@@ -75,34 +83,88 @@ fun DashboardScreen(
                 }
                 is DashboardUiState.Success -> {
                     // Renderizamos el contenido real con los datos de la API
-                    DashboardContent(data = uiState.data)
+                    DashboardContent(
+                        data = uiState.data,
+                        nombreSeleccionado = nombreDependencia
+                    )
                 }
             }
         }
     }
 }
-
 @Composable
-fun DashboardContent(data: DashboardResponse) {
+fun DashboardContent(
+    data: DashboardResponse,
+    nombreSeleccionado: String
+) {
 
     // Formateadores
     val currencyFormat = NumberFormat.getCurrencyInstance(Locale("es", "MX"))
     val numberFormat = NumberFormat.getNumberInstance(Locale("es", "MX"))
+
+    val context = LocalContext.current.applicationContext as Application
+    val viewModelDespendencias = remember { DependenciasViewModel(context) }
+    val viewModel: DashboardViewModel = viewModel()
+
+    // Estado de la UI (Texto seleccionado)
+    val textoSeleccionado by viewModel.opcionDependencia.collectAsState()
+
+    // Convertimos el flujo de datos del ViewModel en un Estado de Compose
+    val listaDependencias by viewModelDespendencias.dependencias.collectAsState()
+
+    // CARGAR LOS DATOS
+    // LaunchedEffect para pedir las dependencias apenas se dibuje este componente
+    LaunchedEffect(Unit) {
+        viewModelDespendencias.cargarDependencias()
+    }
+
+    // AUTO SELECCIONAR EL PRIMER ELEMENTO
+    // Se ejecuta cada vez que la lista de dependencias cambia ( cuando la API responde)
+    LaunchedEffect(listaDependencias) {
+        if (listaDependencias.isNotEmpty()) {
+
+            // Tomamos el primer objeto COMPLETO (ID y Nombre) directamente de la lista
+            val primeraDependencia = listaDependencias[0]
+
+            // Solo actualizamos si lo que está seleccionado es diferente (para evitar bucles)
+            if (textoSeleccionado != primeraDependencia.nombre) {
+
+                viewModel.cambiarDependencia(
+                    primeraDependencia.id,      // ID real (ej. 5)
+                    primeraDependencia.nombre   // Nombre real (ej. "Secretaría de Salud")
+                )
+            }
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+
+        // El titulo
         item {
+            // cambio de nombre de la dependencia de manera automatica
+            val tituloAMostrar = if (nombreSeleccionado == "Dependencias") "Vista General" else nombreSeleccionado
+
             Text(
-                // Se ingresa la dependencia ala que pertenece el usuraio
-                text = "Secretaría de Finanzas - Período ${data.periodo.mes}/${data.periodo.año}",
+                text = "$tituloAMostrar - Período ${data.periodo.mes}/${data.periodo.año}",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = DarkText
             )
-            Spacer(modifier = Modifier.height(8.dp))
+        }
+        // FILTROS
+        // Solo se mustramos este item si hay MÁS de una dependencia en la lista.
+        // Si hay 0 (cargando/error) o 1 (usuario restringido), se oculta.
+        if (listaDependencias.size > 1) {
+            item {
+                FiltrosCardDashboard(
+                    viewModel = viewModel,
+                    viewModelDependencias = viewModelDespendencias
+                )
+            }
         }
 
         // 1. Consumo
@@ -283,6 +345,97 @@ fun TopConsumptionCard(inmuebles: List<InmuebleItem>) {
                     Text(text = "${numberFormat.format(item.consumo)} kWh", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
                 if (index < inmuebles.lastIndex) Divider(color = Color.LightGray, thickness = 0.5.dp)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FiltrosCardDashboard(
+    viewModel: DashboardViewModel,
+    viewModelDependencias: DependenciasViewModel
+) {
+
+    // Estado de la UI (Texto seleccionado)
+    val textoSeleccionado by viewModel.opcionDependencia.collectAsState()
+
+    // Estado de Datos (Lista de objetos Dependencia: ID + Nombre)
+    val listaDependencias by viewModelDependencias.dependencias.collectAsState()
+
+    // PREPARAMOS LAS OPCIONES (Solo datos de la API)
+    // Ya no agregamos nada manual al principio
+    val opcionesDropdown = remember(listaDependencias) {
+        listaDependencias.map { it.nombre }
+    }
+
+    // Cargar datos de la API
+    LaunchedEffect(Unit) {
+        viewModelDependencias.cargarDependencias()
+    }
+
+    // AUTO SELECCIONAR EL PRIMER ELEMENTO
+    // Se ejecuta cada vez que la lista de dependencias cambia ( cuando la API responde)
+    LaunchedEffect(listaDependencias) {
+        if (listaDependencias.isNotEmpty()) {
+
+            // Tomamos el primer objeto COMPLETO (ID y Nombre) directamente de la lista
+            val primeraDependencia = listaDependencias[0]
+
+            // Solo actualizamos si lo que está seleccionado es diferente (para evitar bucles)
+            if (textoSeleccionado != primeraDependencia.nombre) {
+
+                viewModel.cambiarDependencia(
+                    primeraDependencia.id,      // ID real (ej. 5)
+                    primeraDependencia.nombre   // Nombre real (ej. "Secretaría de Salud")
+                )
+            }
+        }
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+
+                // Obtener lista de dependencias desde la api que devuelba el id y nombre de cada una
+                Text(
+                    text = "Dependencia",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                DropdownFiltro(
+                    opciones = opcionesDropdown, // Lista pura
+                    seleccionActual = textoSeleccionado,
+                    onSeleccionChange = { nombreSeleccionado ->
+                        // Lógica cuando el usuario cambia manualmente
+                        val dep = listaDependencias.find { it.nombre == nombreSeleccionado }
+
+                        // Si por alguna razón no lo encuentra , no mandamos nada
+                        if (dep != null) {
+                            viewModel.cambiarDependencia(dep.id, dep.nombre)
+                        }
+                    }
+                )
+                /*
+            Text(
+                text = "Presupuestos",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            // Dropdown de Categoría
+            DropdownFiltro(
+                opciones = listOf("Todas las Categorías", "Categoría A", "Categoría B")
+            )*/
             }
         }
     }

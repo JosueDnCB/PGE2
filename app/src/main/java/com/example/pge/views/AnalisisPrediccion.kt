@@ -19,11 +19,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.pge.models.UserResponse
 import com.example.pge.models.analisisprediccion.AccionEstrategica
 import com.example.pge.ui.theme.GrayCard
@@ -33,7 +31,6 @@ import com.example.pge.viewmodels.AnalisisViewModel
 import com.example.pge.viewmodels.IaUiState
 import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractiva
 import com.example.pge.viewmodels.DependenciasViewModel
-import com.example.pge.models.Dependencia
 
 
 

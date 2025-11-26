@@ -56,7 +56,8 @@ fun TransparencyModuleCard(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(paddingValues),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
