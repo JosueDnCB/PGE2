@@ -38,32 +38,3 @@ data class InmuebleItem(
     val nombre_edificio: String,
     val consumo: Double // Consumo en kWh
 )
-
-// --- 2. Retrofit Interface ---
-
-interface PgeApiService {
-    // Endpoint para obtener el dashboard
-    // http://127.0.0.1:8000/api/dashboard
-    @GET("dashboard")
-    suspend fun getDashboardData(
-        @Query("dependencia_id") dependenciaId: Int? = null,
-        @Query("mes") mes: Int? = null,
-        @Query("año") anio: Int? = null
-    ): DashboardResponse
-}
-
-// --- 3. Singleton de Retrofit (Simple)git ---
-
-object RetrofitClient {
-    // Nota: 10.0.2.2 es localhost para el emulador de Android.
-    // Si usas dispositivo físico, usa la IP de tu PC (ej. 192.168.1.x)
-    private const val BASE_URL = "http://10.0.2.2:8000/api/"
-
-    val apiService: PgeApiService by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(PgeApiService::class.java)
-    }
-}

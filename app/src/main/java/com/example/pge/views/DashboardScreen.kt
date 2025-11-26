@@ -1,6 +1,5 @@
 package com.example.pge.views
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -28,7 +26,6 @@ import com.example.pge.viewmodels.DashboardViewModel
 import com.example.pge.viewmodels.LoginViewModel
 import java.text.NumberFormat
 import java.util.*
-import kotlin.random.Random
 
 @Composable
 fun DashboardScreen(
@@ -37,7 +34,7 @@ fun DashboardScreen(
     isLoggedIn: Boolean,
     usuario: UserResponse?,
     onLoginSuccess: () -> Unit,
-    viewModel: DashboardViewModel = viewModel() // Inyectamos el ViewModel aquí
+    viewModel: DashboardViewModel = viewModel()
 ) {
     var showLoginDialog by remember { mutableStateOf(false) }
     val uiState = viewModel.uiState
@@ -50,7 +47,7 @@ fun DashboardScreen(
                  titulo = "Dashboard",
                 usuarios = usuario,
                 onShowLoginClick = {
-                    onLoginSuccess() // si quieres disparar la acción de login
+                    onLoginSuccess()
                 }
             )
 
@@ -99,6 +96,7 @@ fun DashboardContent(data: DashboardResponse) {
     ) {
         item {
             Text(
+                // Se ingresa la dependencia ala que pertenece el usuraio
                 text = "Secretaría de Finanzas - Período ${data.periodo.mes}/${data.periodo.año}",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
