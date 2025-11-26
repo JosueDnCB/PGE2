@@ -27,8 +27,6 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     private val api = RetrofitInstance.getRetrofit(getApplication()).create(DashboardApi::class.java)
 
-        private set
-
     init {
         // Cargar datos al iniciar el ViewModel
         fetchDashboardData()

@@ -34,10 +34,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.pge.data.preferences.TokenManager
 import com.example.pge.models.UserResponse
+import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.GrayCard
 import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.viewmodels.LoginViewModel
@@ -82,7 +85,7 @@ fun PerfilUsuarioScreen(navController: NavController,loginViewModel: LoginViewMo
             item { PreferenciasUsuarioCard() }
 
             // 5. Seguridad y sesión
-            item { SeguridadSesionCard() }
+            item { SeguridadSesionCard(navController, loginViewModel) }
         }
     }
 }
@@ -234,7 +237,14 @@ fun PreferenciasUsuarioCard() {
 }
 
 @Composable
-fun SeguridadSesionCard() {
+fun SeguridadSesionCard(
+    navController: NavController,
+    loginViewModel: LoginViewModel
+) {
+
+    val context = LocalContext.current       // ← AQUÍ debe ir
+    val tokenManager = TokenManager(context) // ← AQUÍ también
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
@@ -255,7 +265,20 @@ fun SeguridadSesionCard() {
             InfoField("Último inicio de sesión", "Hoy · 09:43 AM")
 
             Button(
-                onClick = { /* logout */ },
+                onClick = {
+
+                    // 1. Borrar token local
+                    tokenManager.clearToken()
+
+                    // 2. Resetear estado en ViewModel
+                    loginViewModel.cerrarSesion()
+
+                    // 3. Navegar al login limpiando backstack
+                    navController.navigate(NavRoutes.Principal.route) {
+                        popUpTo(0)
+                    }
+
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
             ) {
@@ -264,4 +287,6 @@ fun SeguridadSesionCard() {
         }
     }
 }
+
+
 

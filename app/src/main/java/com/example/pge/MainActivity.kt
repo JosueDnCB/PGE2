@@ -29,6 +29,7 @@ import com.example.pge.views.TransparencyModuleCard
 import androidx.core.view.WindowCompat
 import com.example.pge.viewmodels.LoginViewModel
 import com.example.pge.views.DependenciasScreenConnected
+import com.example.pge.views.LoginDialog
 import com.example.pge.views.PerfilUsuarioScreen
 
 class MainActivity : ComponentActivity() {
@@ -110,6 +111,26 @@ class MainActivity : ComponentActivity() {
                                     navController = navController
                                 )
                             }
+
+                            composable(NavRoutes.LoginView.route) {
+
+                                LoginDialog(
+                                    loginViewModel = loginViewModel,
+
+                                    // 2. Qué hacer si cierran el diálogo (tachecito)
+                                    onDismissRequest = {
+                                        navController.popBackStack() // Regresamos a la pantalla anterior
+                                    },
+
+                                    // 3. Qué hacer si el login es exitoso
+                                    onLoginSuccess = {
+                                        navController.navigate(NavRoutes.InicioView.route) {
+                                            popUpTo(NavRoutes.LoginView.route) { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+
 
                             composable(NavRoutes.Analisis.route) {
                                 AnalisisDashboardScreen(

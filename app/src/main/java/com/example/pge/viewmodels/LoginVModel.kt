@@ -83,4 +83,11 @@ class LoginViewModel(private val context: Context) : ViewModel() {
             } catch (_: Exception) { }
         }
     }
+
+    fun cerrarSesion() {
+        _isLoggedIn.value = false
+        _usuario.value = null
+    }
+
 }
+

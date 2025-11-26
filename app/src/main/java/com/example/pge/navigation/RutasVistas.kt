@@ -16,4 +16,6 @@ sealed class NavRoutes(val route: String) {
     object Usuarios : NavRoutes("Usuarios")
 
     object InicioView : NavRoutes("firstView")
+
+    object LoginView : NavRoutes("Login")
 }
