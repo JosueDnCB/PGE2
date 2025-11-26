@@ -1,5 +1,7 @@
 package com.example.pge.views
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -31,19 +33,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pge.data.network.ConsumoMasivoApi
+import com.example.pge.data.network.RetrofitInstance
+import com.example.pge.data.respositorios.ConsumoRepositorio
 import com.example.pge.models.UserResponse
 import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.viewmodels.LoginViewModel
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -55,6 +63,41 @@ fun CargaConsumosScreen(
     onLoginSuccess: () -> Unit
 ) {
     var showLoginDialog by remember { mutableStateOf(!isLoggedIn) }
+
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val consumoRepo = ConsumoRepositorio()
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            if (uri != null) {
+
+                scope.launch {
+
+                    try {
+                        val multipart = consumoRepo.uriToMultipart(context, uri)
+
+                        val api = RetrofitInstance.getRetrofit(context).create(ConsumoMasivoApi::class.java)
+                        val response = api.cargarArchivo(multipart)
+
+                        if (response.isSuccessful) {
+                            println("OK: ${response.body()?.message}")
+                        } else {
+                            val raw = response.errorBody()?.string()
+                            println("Error API: $raw")
+                        }
+
+                    } catch (e: Exception) {
+                        println("ERROR SUBIENDO ARCHIVO: ${e.message}")
+                    }
+
+                }
+            }
+        }
+    )
+
 
     Scaffold(
         topBar = {
@@ -142,14 +185,17 @@ fun CargaConsumosScreen(
                             textAlign = TextAlign.Center
                         )
                         Button(
-                            onClick = { /* acción para subir archivo */ },
-                            colors = ButtonDefaults.buttonColors(containerColor =  PgeGreenButton)
+                            onClick = {
+                                filePickerLauncher.launch(
+                                    arrayOf(
+                                        "text/csv",
+                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    )
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PgeGreenButton)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.UploadFile,
-                                contentDescription = "Subir",
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Icon(imageVector = Icons.Default.UploadFile, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Seleccionar archivo")
                         }

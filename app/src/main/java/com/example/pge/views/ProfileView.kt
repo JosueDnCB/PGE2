@@ -73,13 +73,13 @@ fun PerfilUsuarioScreen(navController: NavController,loginViewModel: LoginViewMo
         ) {
 
             // 1. Información principal del usuario
-            item { PerfilHeader() }
+            item { PerfilHeader(usuario) }
 
             // 2. Estadísticas personales
             item { EstadisticasPerfilCard() }
 
             // 3. Información personal editable
-            item { DatosPersonalesCard() }
+            item { DatosPersonalesCard(usuario) }
 
             // 4. Preferencias del usuario
             item { PreferenciasUsuarioCard() }
@@ -91,11 +91,14 @@ fun PerfilUsuarioScreen(navController: NavController,loginViewModel: LoginViewMo
 }
 
 @Composable
-fun PerfilHeader() {
+fun PerfilHeader(usuario: UserResponse?) {
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        // Inicial de nombre
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -104,7 +107,7 @@ fun PerfilHeader() {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "U",
+                text = usuario?.nombre?.firstOrNull()?.uppercase() ?: "U",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = PgeGreenButton
@@ -114,18 +117,19 @@ fun PerfilHeader() {
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "User",
+            text = usuario?.nombre ?: "Usuario",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "user.example@correo.com",
+            text = usuario?.email ?: "correo@correo.com",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
 
 @Composable
 fun EstadisticasPerfilCard() {
@@ -166,12 +170,13 @@ fun PerfilStatItem(label: String, value: String) {
 }
 
 @Composable
-fun DatosPersonalesCard() {
+fun DatosPersonalesCard(usuario: UserResponse?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
+
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -183,9 +188,9 @@ fun DatosPersonalesCard() {
                 fontWeight = FontWeight.Bold
             )
 
-            InfoField("Nombre completo", "User")
-            InfoField("Correo", "user.example@correo.com")
-            InfoField("Dependencia", "Secretaría de Finanzas")
+            InfoField("Nombre completo", usuario?.nombre ?: "N/A")
+            InfoField("Usuario", usuario?.nombre_usuario ?: "N/A")
+            InfoField("Correo", usuario?.email ?: "N/A")
 
             Button(
                 onClick = { /* editar */ },

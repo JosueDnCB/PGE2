@@ -31,10 +31,14 @@ import com.example.pge.viewmodels.LoginViewModel
 import com.example.pge.views.DependenciasScreenConnected
 import com.example.pge.views.LoginDialog
 import com.example.pge.views.PerfilUsuarioScreen
+import com.example.pge.data.preferences.TokenManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val tokenManager = TokenManager(this)
+        tokenManager.clearToken()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -108,7 +112,18 @@ class MainActivity : ComponentActivity() {
 
                             composable(NavRoutes.Transparencia.route) {
                                 TransparencyModuleCard(
-                                    navController = navController
+                                    navController = navController,
+                                    isLoggedIn = isLoggedIn,
+                                    usuarios = usuarioLogin,
+                                    onLoginSuccess = {
+                                        // Actualiza el usuario en tu ViewModel
+                                        loginViewModel.getUser()
+                                        // Navega al dashboard
+                                        navController.navigate(NavRoutes.Dashboard.route) {
+                                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
                                 )
                             }
 

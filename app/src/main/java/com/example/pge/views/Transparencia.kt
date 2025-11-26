@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.pge.models.UserResponse
 import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.DarkText
 import com.example.pge.ui.theme.PgeCardBorder
@@ -33,84 +34,102 @@ import com.example.pge.ui.theme.PgeGreenButton
 Tarjeta principal del Módulo de Transparencia
  */
 @Composable
-fun TransparencyModuleCard(navController: NavController) {
+fun TransparencyModuleCard(
+    navController: NavController,
+    isLoggedIn: Boolean,
+    usuarios: UserResponse?,
+    onLoginSuccess: () -> Unit
+) {
+    var showLoginDialog by remember { mutableStateOf(false) }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
-    ) {
-        item {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, shape = RoundedCornerShape(12.dp))
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Título Principal
-                Text(
-                    text = "Módulo de Transparencia",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = DarkText
-                )
+    Scaffold(
+        topBar = {
+            PgeTopAppBar(
+                isLoggedIn = isLoggedIn,
+                usuarios = usuarios,
+                onShowLoginClick = { showLoginDialog = true }
+            )
+        },
+        containerColor = Color(0xFFF8FAFC)
+    ) { paddingValues ->
 
-                // Párrafo de descripción
-                Text(
-                    text = "Consulta ciudadana del consumo y gasto energético por dependencia. Esta sección expone indicadores clave y series históricas consumidas desde una API pública conforme al Núcleo Digital de Gobierno.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    lineHeight = 22.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-
-                // Tarjetas de características
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    FeatureInfoCard(
-                        title = "Indicadores abiertos",
-                        description = "Consumo total, gasto y eficiencia por kWh."
-                    )
-                    FeatureInfoCard(
-                        title = "Descarga de datos",
-                        description = "Exportación en CSV y JSON desde la API."
-                    )
-                    FeatureInfoCard(
-                        title = "Comparativas",
-                        description = "Benchmarking entre dependencias y periodos."
-                    )
-                }
-
-                // Botón de documentación
-                Button(
-                    onClick = { /* TODO: Acción del botón */ },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PgeGreenButton,
-                        contentColor = Color.White
-                    )
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, shape = RoundedCornerShape(12.dp))
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Storage,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    // Título Principal
                     Text(
-                        text = "Documentación de API",
-                        fontWeight = FontWeight.SemiBold,
-                        style = MaterialTheme.typography.labelLarge
+                        text = "Módulo de Transparencia",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = DarkText
                     )
+
+                    // Párrafo de descripción
+                    Text(
+                        text = "Consulta ciudadana del consumo y gasto energético por dependencia. Esta sección expone indicadores clave y series históricas consumidas desde una API pública conforme al Núcleo Digital de Gobierno.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        lineHeight = 22.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Tarjetas de características
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        FeatureInfoCard(
+                            title = "Indicadores abiertos",
+                            description = "Consumo total, gasto y eficiencia por kWh."
+                        )
+                        FeatureInfoCard(
+                            title = "Descarga de datos",
+                            description = "Exportación en CSV y JSON desde la API."
+                        )
+                        FeatureInfoCard(
+                            title = "Comparativas",
+                            description = "Benchmarking entre dependencias y periodos."
+                        )
+                    }
+
+                    // Botón de documentación
+                    Button(
+                        onClick = { /* TODO: Acción del botón */ },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PgeGreenButton,
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Storage,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Documentación de API",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
                 }
             }
-        }
 
-        item {
-            ObjectivesSection()
-        }
+            item {
+                ObjectivesSection()
+            }
 
-        item {
-            ApiSection()
+            item {
+                ApiSection()
+            }
         }
     }
 }

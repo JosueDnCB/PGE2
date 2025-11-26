@@ -18,14 +18,18 @@ class LoginViewModel(private val context: Context) : ViewModel() {
     private val tokenManager = TokenManager(context)
     private val loginApi = RetrofitInstance.getRetrofit(context).create(LoginApi::class.java)
 
-    // 🔥 Estado observable del usuario
     private val _usuario = MutableStateFlow<UserResponse?>(null)
     val usuario: StateFlow<UserResponse?> get() = _usuario
 
-    // 🔥 Estado observable de login
     private val _isLoggedIn = MutableStateFlow(tokenManager.getToken() != null)
     val isLoggedIn: StateFlow<Boolean> get() = _isLoggedIn
 
+    init {
+        // Si hay token guardado, cargar usuario
+        if (_isLoggedIn.value) {
+            getUser()
+        }
+    }
 
     // --------------------------
     //  LOGIN
@@ -33,39 +37,29 @@ class LoginViewModel(private val context: Context) : ViewModel() {
     fun login(email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                // Enviamos el request con el campo "contrasena", que es lo que tu API espera
                 val response = loginApi.login(LoginRequest(email = email, contrasena = password))
 
                 if (response.isSuccessful && response.body() != null) {
-                    val loginBody = response.body()!!
-                    val token = loginBody.accessToken
+                    val token = response.body()!!.accessToken
 
-                    // Guardamos el token en TokenManager
                     tokenManager.saveToken(token)
-
-                    // Actualizamos estado de login
                     _isLoggedIn.value = true
 
-                    // Obtenemos los datos del usuario
                     getUser()
 
                     onResult(true)
 
                 } else {
-                    // Si la API devuelve un error, mostramos el mensaje real
-                    val errorBody = response.errorBody()?.string()
-                    Log.e("LoginError", errorBody ?: "Error desconocido del servidor")
+                    Log.e("LoginError", response.errorBody()?.string() ?: "Error desconocido del servidor")
                     onResult(false)
                 }
 
             } catch (e: Exception) {
-                // Capturamos cualquier excepción de red o JSON
                 Log.e("LoginException", e.message ?: "Excepción desconocida")
                 onResult(false)
             }
         }
     }
-
 
     // --------------------------
     //  GET USER ( /auth/me )
@@ -76,18 +70,25 @@ class LoginViewModel(private val context: Context) : ViewModel() {
                 val response = loginApi.getUser()
 
                 if (response.isSuccessful && response.body() != null) {
-
-                    _usuario.value = response.body()!!   // Guardamos usuario en StateFlow ✔
+                    _usuario.value = response.body()
+                } else {
+                    // Si el token NO sirve, cerrar sesión automáticamente
+                    cerrarSesion()
                 }
 
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+                cerrarSesion()
+            }
         }
     }
 
+    // --------------------------
+    //  LOGOUT
+    // --------------------------
     fun cerrarSesion() {
+        tokenManager.clearToken()      // ❗ NECESARIO
         _isLoggedIn.value = false
         _usuario.value = null
+        Log.d("Logout", "Sesión cerrada correctamente")
     }
-
 }
-
