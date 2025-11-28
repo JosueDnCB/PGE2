@@ -1,6 +1,5 @@
 package com.example.pge.views.AnalisisPrediccion
 
-import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -18,11 +17,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pge.models.analisisprediccion.DatoGrafica
-
-
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.nativeCanvas
+
 
 @Composable
 fun GraficaProyeccionInteractiva(
@@ -31,33 +30,27 @@ fun GraficaProyeccionInteractiva(
 ) {
     if (datos.isEmpty()) return
 
-    // Colores
-    val colorLineaReal = Color(0xFF1A237E) // Azul oscuro
-    val colorLineaPred = Color(0xFF2E7D32) // Verde
-    val colorRango = Color(0xFF2E7D32).copy(alpha = 0.2f) // Verde clarito transparente
-    val colorPunto = Color.White
-    val gridColor = Color(0xFFEEEEEE)
+    // Colores basados en la imagen de referencia
+    val colorReal = Color(0xFF1565C0) // Azul sólido
+    val colorPrediccion = Color(0xFF2E7D32) // Verde oscuro
+    val colorRango = Color(0xFFE8F5E9) // Verde muy claro para el área
+    val colorGrid = Color(0xFFEEEEEE)
 
-    // Estado para el tooltip
     var puntoSeleccionado by remember { mutableStateOf<DatoGrafica?>(null) }
 
-    // Cálculos de Escala
-    // Usamos el maximo entre costo real, predicción y el tope del rango de error
+    // Escala Y (Max Value)
     val maxValor = datos.maxOf {
         val maxRango = it.rangoMax ?: 0.0
         maxOf(it.totalCosto, maxRango)
-    }.toFloat() * 1.1f
+    }.toFloat() * 1.15f // 15% margen arriba
 
     val density = LocalDensity.current
     val textPaint = remember(density) {
-        Paint().apply {
+        android.graphics.Paint().apply {
             color = android.graphics.Color.GRAY
             textSize = density.run { 10.sp.toPx() }
-            textAlign = Paint.Align.CENTER
-            // Usa la ruta completa:
-            // android.graphics.Typeface
+            textAlign = android.graphics.Paint.Align.CENTER
             typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
-
         }
     }
 
@@ -82,92 +75,142 @@ fun GraficaProyeccionInteractiva(
                 return height - ((valor.toFloat() / maxValor) * height)
             }
 
+            // Líneas de fondo
+            for (i in 0..4) {
+                val y = height * (i / 4f)
+                drawLine(
+                    color = colorGrid,
+                    start = Offset(0f, y),
+                    end = Offset(width, y),
+                    strokeWidth = 1f
+                )
+            }
 
-            // DIBUJAR RANGO (SOMBRA VERDE)
-
+            // ÁREA DE CONFIANZA
             val pathRango = Path()
-            val predicciones = datos.filter { it.tipo == "prediccion" && it.rangoMin != null && it.rangoMax != null }
+            val predicciones = datos.filter { it.tipo == "prediccion" }
 
             if (predicciones.isNotEmpty()) {
-                // Lado Superior
                 predicciones.forEachIndexed { idx, d ->
                     val realIndex = datos.indexOf(d)
                     val x = realIndex * stepX
-                    val yMax = getY(d.rangoMax!!)
-                    if (idx == 0) pathRango.moveTo(x, yMax) else pathRango.lineTo(x, yMax)
+                    // Si es el primero, intentamos conectar visualmente con el último real
+                    if (idx == 0 && realIndex > 0) {
+                        val prevX = (realIndex - 1) * stepX
+                        // Usamos el valor real anterior como punto de partida aproximado
+                        val prevY = getY(datos[realIndex - 1].totalCosto)
+                        pathRango.moveTo(prevX, prevY)
+                        pathRango.lineTo(x, getY(d.rangoMax ?: d.totalCosto))
+                    } else if (idx == 0) {
+                        pathRango.moveTo(x, getY(d.rangoMax ?: d.totalCosto))
+                    } else {
+                        // Curva suave hacia el siguiente punto máximo
+                        val prevD = predicciones[idx - 1]
+                        val prevRealIndex = datos.indexOf(prevD)
+                        val prevX = prevRealIndex * stepX
+                        val prevY = getY(prevD.rangoMax ?: prevD.totalCosto)
+
+                        val curY = getY(d.rangoMax ?: d.totalCosto)
+                        // Bezier simple
+                        pathRango.cubicTo(
+                            (prevX + x) / 2, prevY,
+                            (prevX + x) / 2, curY,
+                            x, curY
+                        )
+                    }
                 }
-                // Lado Inferior (Regreso)
+                // Regreso por el mínimo
                 for (i in predicciones.indices.reversed()) {
                     val d = predicciones[i]
                     val realIndex = datos.indexOf(d)
                     val x = realIndex * stepX
-                    val yMin = getY(d.rangoMin!!)
-                    pathRango.lineTo(x, yMin)
+                    val yMin = getY(d.rangoMin ?: d.totalCosto)
+
+                    if (i == predicciones.lastIndex) {
+                        pathRango.lineTo(x, yMin)
+                    } else {
+                        val prevD = predicciones[i + 1] // El punto anterior en la reversa es el siguiente en la lista original
+                        val prevRealIndex = datos.indexOf(prevD)
+                        val prevX = prevRealIndex * stepX
+                        val prevY = getY(prevD.rangoMin ?: prevD.totalCosto)
+
+                        pathRango.cubicTo(
+                            (prevX + x) / 2, prevY,
+                            (prevX + x) / 2, yMin,
+                            x, yMin
+                        )
+                    }
                 }
                 pathRango.close()
                 drawPath(pathRango, colorRango)
             }
 
-
-            // DIBUJAR LÍNEAS (CONECTADAS)
-
+            // LÍNEAS PRINCIPALES
             val pathReal = Path()
             val pathPred = Path()
-
-            // Variable para guardar la coordenada del último punto "real"
-            var ultimoPuntoReal: Offset? = null
+            var lastPoint: Offset? = null
 
             datos.forEachIndexed { i, d ->
                 val x = i * stepX
                 val y = getY(d.totalCosto)
-                val puntoActual = Offset(x, y)
+                val currentPoint = Offset(x, y)
 
-                if (d.tipo == "real") {
-                    if (i == 0) pathReal.moveTo(x, y) else pathReal.lineTo(x, y)
-                    ultimoPuntoReal = puntoActual // Guardamos referencia
+                if (i == 0) {
+                    pathReal.moveTo(x, y)
+                    lastPoint = currentPoint
                 } else {
-                    // Es predicción
-                    if (pathPred.isEmpty) {
-                        // CRUCIAL: Si es el primer punto de predicción, nos movemos al último real
-                        // y dibujamos una línea hasta el actual para cerrar el hueco.
-                        ultimoPuntoReal?.let { last ->
-                            pathPred.moveTo(last.x, last.y)
-                            pathPred.lineTo(x, y)
-                        } ?: pathPred.moveTo(x, y) // Si no hay datos reales previos
+                    val prevPoint = lastPoint!!
+                    // Punto de control para curva Bezier (mitad del camino)
+                    val controlX1 = (prevPoint.x + currentPoint.x) / 2
+                    val controlY1 = prevPoint.y
+                    val controlX2 = (prevPoint.x + currentPoint.x) / 2
+                    val controlY2 = currentPoint.y
+
+                    if (d.tipo == "real") {
+                        pathReal.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y)
                     } else {
-                        pathPred.lineTo(x, y)
+                        // Si es el primer punto de predicción, nos movemos al último punto real
+                        if (pathPred.isEmpty) {
+                            pathPred.moveTo(prevPoint.x, prevPoint.y)
+                        }
+                        pathPred.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y)
                     }
+                    lastPoint = currentPoint
                 }
             }
 
-            // Dibujamos Real (Sólida)
-            drawPath(pathReal, color = colorLineaReal, style = Stroke(width = 5f))
+            // Dibujar Path Real
+            drawPath(
+                pathReal,
+                color = colorReal,
+                style = Stroke(width = 5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
+            )
 
-            // Dibujamos Predicción (Punteada)
+            // Dibujar Path Predicción (Punteado)
             drawPath(
                 pathPred,
-                color = colorLineaPred,
+                color = colorPrediccion,
                 style = Stroke(
                     width = 5f,
+                    cap = StrokeCap.Round,
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
                 )
             )
 
-
-            // PUNTOS Y EJE X
-
+            // PUNTOS Y ETIQUETAS
             datos.forEachIndexed { i, d ->
                 val x = i * stepX
                 val y = getY(d.totalCosto)
 
-                // Puntos (Azul o Verde)
-                val color = if(d.tipo == "real") colorLineaReal else colorLineaPred
-                drawCircle(color, radius = 5f, center = Offset(x, y))
-                drawCircle(colorPunto, radius = 2.5f, center = Offset(x, y))
+                // Puntos solo en cambios importantes o espaciados
+                val color = if(d.tipo == "real") colorReal else colorPrediccion
 
-                // Etiquetas Eje X (Solo algunas para no encimar)
-                // Dibujamos si es el primero, el último, o cada 3 meses
-                if (i == 0 || i == datos.lastIndex || i % 3 == 0) {
+                // Dibujamos puntos sólidos con borde blanco
+                drawCircle(color, radius = 6f, center = Offset(x, y))
+                drawCircle(Color.White, radius = 3f, center = Offset(x, y))
+
+                // Etiquetas Mes
+                if (i == 0 || i == datos.lastIndex || i % 4 == 0) {
                     drawContext.canvas.nativeCanvas.drawText(
                         d.obtenerEtiquetaFecha(),
                         x,
@@ -177,14 +220,10 @@ fun GraficaProyeccionInteractiva(
                 }
             }
 
-
             // SELECCIÓN
-
             puntoSeleccionado?.let { sel ->
                 val index = datos.indexOf(sel)
                 val x = index * stepX
-
-                // Línea vertical
                 drawLine(
                     color = Color.Gray,
                     start = Offset(x, 0f),
@@ -197,10 +236,7 @@ fun GraficaProyeccionInteractiva(
 
         // TOOLTIP
         puntoSeleccionado?.let { dato ->
-            TooltipProyeccion(
-                dato = dato,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+            TooltipProyeccion(dato, Modifier.align(Alignment.TopCenter))
         }
     }
 }
