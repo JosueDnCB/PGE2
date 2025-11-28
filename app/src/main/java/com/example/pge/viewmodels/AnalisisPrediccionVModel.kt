@@ -112,9 +112,9 @@ class AnalisisViewModel(application: Application) : AndroidViewModel(application
 
 
 
-    init {
+   /* init {
         cargarAnalisisProyeccion()
-    }
+    }*/
 
     fun cargarAnalisisProyeccion() {
         viewModelScope.launch {

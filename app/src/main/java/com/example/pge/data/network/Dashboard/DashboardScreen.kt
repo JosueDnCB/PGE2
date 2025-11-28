@@ -14,3 +14,4 @@ interface DashboardApi {
         @Query("año") anio: Int? = null
     ): DashboardResponse
 }
+

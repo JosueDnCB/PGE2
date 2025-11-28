@@ -315,6 +315,7 @@ fun PrediccionGastoCard(
     // Recolectamos el estado del ViewModel que nos pasaron
     val uiState by viewModel.uiState.collectAsState()
 
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -324,6 +325,20 @@ fun PrediccionGastoCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            // Cabecera con Icono
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Psychology,
+                    contentDescription = "IA",
+                    tint = Color(0xFF6200EA) // Un color morado tipo "IA"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Consultoría de proyección por IA",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             Text(
                 text = "Predicción de Gasto (Próximos Meses)",
                 style = MaterialTheme.typography.titleMedium,
@@ -348,6 +363,15 @@ fun PrediccionGastoCard(
                 is AnalisisUiState.Success -> {
                     val datos = state.data.datosGrafica
                     val resumen = state.data.resumen
+
+                    Text("Obtener un análisis de proyección avanzado.")
+                    Button(
+                        onClick = { viewModel.cargarAnalisisProyeccion() },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EA)),
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Generar Proyecciones")
+                    }
 
                     // AQUI LLAMAMOS A LA GRÁFICA PERSONALIZADA
                     GraficaProyeccionInteractiva(

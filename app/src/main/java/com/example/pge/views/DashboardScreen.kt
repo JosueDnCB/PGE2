@@ -1,7 +1,6 @@
 package com.example.pge.views
 
 import android.app.Application
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,8 +22,6 @@ import com.example.pge.models.InmuebleItem
 import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.DarkText
 import com.example.pge.ui.theme.PgeChartBlue
-import com.example.pge.ui.theme.PgeGreenButton
-import com.example.pge.viewmodels.AnalisisViewModel
 import com.example.pge.viewmodels.DashboardUiState
 import com.example.pge.viewmodels.DashboardViewModel
 import com.example.pge.viewmodels.DependenciasViewModel
@@ -32,6 +29,9 @@ import com.example.pge.viewmodels.LoginViewModel
 import com.example.pge.views.Dashboard.EvolutionChartCard
 import java.text.NumberFormat
 import java.util.*
+import com.example.pge.models.PublicDashboard.RespuestaComparativa
+import com.example.pge.models.PublicDashboard.SerieGrafica
+import com.example.pge.views.PublicDashboardComponents.RankingBarChart // Importa tu componente gráfico
 
 @Composable
 fun DashboardScreen(
@@ -137,6 +137,26 @@ fun DashboardContent(
             }
         }
     }
+    // ADAPTADOR DE DATOS
+    // Convertimos la lista de Inmuebles (Privado) al formato de RespuestaComparativa (Público)
+    // para poder reutilizar la gráfica RankingBarChart.
+    val rankingData = remember(data.data_inmuebles) {
+        if (data.data_inmuebles.isEmpty()) null
+        else {
+            RespuestaComparativa(
+                titulo = "Inmuebles con Mayor Consumo",
+                ejeX = data.data_inmuebles.map { it.nombre_edificio },
+                series = listOf(
+                    SerieGrafica(
+                        nombre = "Consumo",
+                        datos = data.data_inmuebles.map { it.consumo },
+                        color = null
+                    )
+                ),
+                dependenciasInvolucradas = emptyList()
+            )
+        }
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -168,7 +188,7 @@ fun DashboardContent(
             }
         }
 
-        // 1. Consumo
+        // Consumo
         item {
             InfoCard(
                 title = "Consumo del Mes (kWh)",
@@ -180,7 +200,7 @@ fun DashboardContent(
             )
         }
 
-        // 2. Costo
+        // Costo
         item {
             InfoCard(
                 title = "Costo del Mes (MXN)",
@@ -192,7 +212,7 @@ fun DashboardContent(
             )
         }
 
-        // 3. Presupuesto
+        // Presupuesto
         item {
             // Calcular uso para la barra de progreso
             // Evitar división por cero
@@ -206,7 +226,7 @@ fun DashboardContent(
             )
         }
 
-        // 4. Gráfica de Evolución
+        // Gráfica de Evolución
         item {
 
             EvolutionChartCard(
@@ -214,16 +234,31 @@ fun DashboardContent(
             )
         }
 
-        // 5. Top Inmuebles
+        // Top Inmuebles
         item {
-            TopConsumptionCard(
-                inmuebles = data.data_inmuebles
-            )
+            if (rankingData != null) {
+                // Usamos el componente visual que hicimos para el público
+                RankingBarChart(data = rankingData)
+            } else {
+                // Fallback por si la lista viene vacía
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "No hay datos de inmuebles para este periodo.",
+                        modifier = Modifier.padding(16.dp),
+                        color = Color.Gray,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
         }
     }
 }
 
-// --- Componentes Reutilizables Adaptados ---
+// Componentes Reutilizables Adaptados
 
 @Composable
 fun InfoCard(
@@ -357,45 +392,36 @@ fun TopConsumptionCard(inmuebles: List<InmuebleItem>) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FiltrosCardDashboard(
     viewModel: DashboardViewModel,
     viewModelDependencias: DependenciasViewModel
 ) {
-
-    // Estado de la UI (Texto seleccionado)
+    // Estados observados
     val textoSeleccionado by viewModel.opcionDependencia.collectAsState()
+    val anioSel by viewModel.anioSeleccionado.collectAsState()
+    val mesSel by viewModel.mesSeleccionado.collectAsState()
 
-    // Estado de Datos (Lista de objetos Dependencia: ID + Nombre)
     val listaDependencias by viewModelDependencias.dependencias.collectAsState()
 
-    // PREPARAMOS LAS OPCIONES (Solo datos de la API)
-    // Ya no agregamos nada manual al principio
-    val opcionesDropdown = remember(listaDependencias) {
-        listaDependencias.map { it.nombre }
-    }
+    // Opciones para Dependencias
+    val opcionesDependencias = remember(listaDependencias) { listaDependencias.map { it.nombre } }
 
-    // Cargar datos de la API
+    // Opciones para Meses (Dinámico)
+    val mesesValidos = viewModel.obtenerMesesValidos()
+    val nombresMeses = listOf("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
+
+    // Cargar Dependencias al inicio
     LaunchedEffect(Unit) {
         viewModelDependencias.cargarDependencias()
     }
 
-    // AUTO SELECCIONAR EL PRIMER ELEMENTO
-    // Se ejecuta cada vez que la lista de dependencias cambia ( cuando la API responde)
+    // AUTO SELECCIONAR EL PRIMER ELEMENTO (Dependencia)
     LaunchedEffect(listaDependencias) {
         if (listaDependencias.isNotEmpty()) {
-
-            // Tomamos el primer objeto COMPLETO (ID y Nombre) directamente de la lista
-            val primeraDependencia = listaDependencias[0]
-
-            // Solo actualizamos si lo que está seleccionado es diferente (para evitar bucles)
-            if (textoSeleccionado != primeraDependencia.nombre) {
-
-                viewModel.cambiarDependencia(
-                    primeraDependencia.id,      // ID real (ej. 5)
-                    primeraDependencia.nombre   // Nombre real (ej. "Secretaría de Salud")
-                )
+            val primera = listaDependencias[0]
+            if (textoSeleccionado != primera.nombre) {
+                viewModel.cambiarDependencia(primera.id, primera.nombre)
             }
         }
     }
@@ -409,40 +435,58 @@ fun FiltrosCardDashboard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-
-                // Obtener lista de dependencias desde la api que devuelba el id y nombre de cada una
-                Text(
-                    text = "Dependencia",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                DropdownFiltro(
-                    opciones = opcionesDropdown, // Lista pura
-                    seleccionActual = textoSeleccionado,
-                    onSeleccionChange = { nombreSeleccionado ->
-                        // Lógica cuando el usuario cambia manualmente
-                        val dep = listaDependencias.find { it.nombre == nombreSeleccionado }
-
-                        // Si por alguna razón no lo encuentra , no mandamos nada
-                        if (dep != null) {
-                            viewModel.cambiarDependencia(dep.id, dep.nombre)
-                        }
-                    }
-                )
-                /*
             Text(
-                text = "Presupuestos",
+                text = "Configuración",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            // Dropdown de Categoría
+
+            // DEPENDENCIA
             DropdownFiltro(
-                opciones = listOf("Todas las Categorías", "Categoría A", "Categoría B")
-            )*/
+                label = "Dependencia",
+                opciones = opcionesDependencias,
+                seleccionActual = textoSeleccionado,
+                onSeleccionChange = { nombre ->
+                    val dep = listaDependencias.find { it.nombre == nombre }
+                    if (dep != null) viewModel.cambiarDependencia(dep.id, dep.nombre)
+                }
+            )
+
+            // FILA DE FECHAS
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
+                // AÑO
+                Box(modifier = Modifier.weight(1f)) {
+                    DropdownFiltro(
+                        label = "Año",
+                        opciones = viewModel.aniosDisponibles.map { it.toString() },
+                        seleccionActual = anioSel.toString(),
+                        onSeleccionChange = { nuevoAnio ->
+                            viewModel.cambiarAnio(nuevoAnio.toInt())
+                        }
+                    )
+                }
+
+                // MES
+                Box(modifier = Modifier.weight(1f)) {
+                    // Convertimos el número de mes (11) a nombre ("Noviembre") para mostrar
+                    // Restamos 1 porque la lista nombresMeses empieza en índice 0
+                    val nombreMesActual = nombresMeses.getOrElse(mesSel - 1) { "" }
+
+                    // Solo mostramos los nombres de meses válidos según el año
+                    val opcionesMesesTexto = mesesValidos.map { nombresMeses[it - 1] }
+
+                    DropdownFiltro(
+                        label = "Mes",
+                        opciones = opcionesMesesTexto,
+                        seleccionActual = nombreMesActual,
+                        onSeleccionChange = { nombre ->
+                            // Convertimos nombre "Noviembre" a número (11)
+                            val numeroMes = nombresMeses.indexOf(nombre) + 1
+                            viewModel.cambiarMes(numeroMes)
+                        }
+                    )
+                }
             }
         }
     }
