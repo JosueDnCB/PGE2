@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.ui.graphics)
     implementation(libs.androidx.benchmark.traceprocessor)
     implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.ui.text)
     debugImplementation ("androidx.compose.ui:ui-tooling")
     debugImplementation ("androidx.compose.ui:ui-test-manifest")
 

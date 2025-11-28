@@ -364,14 +364,6 @@ fun PrediccionGastoCard(
                     val datos = state.data.datosGrafica
                     val resumen = state.data.resumen
 
-                    Text("Obtener un análisis de proyección avanzado.")
-                    Button(
-                        onClick = { viewModel.cargarAnalisisProyeccion() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EA)),
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Generar Proyecciones")
-                    }
 
                     // AQUI LLAMAMOS A LA GRÁFICA PERSONALIZADA
                     GraficaProyeccionInteractiva(
