@@ -84,10 +84,6 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
                 AnalisisEstrategicoCard(viewModel = viewModel)
             }
 
-            // 5. Tarjeta de Comparativa de Consumo
-            item {
-                ComparativaConsumoCard()
-            }
         }
     }
 }

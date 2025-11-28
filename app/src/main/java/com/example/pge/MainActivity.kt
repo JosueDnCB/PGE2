@@ -32,6 +32,7 @@ import com.example.pge.views.DependenciasScreenConnected
 import com.example.pge.views.LoginDialog
 import com.example.pge.views.PerfilUsuarioScreen
 import com.example.pge.data.preferences.TokenManager
+import com.example.pge.views.PublicDashboardScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,6 +76,22 @@ class MainActivity : ComponentActivity() {
 
                             composable(NavRoutes.Dashboard.route) {
                                 DashboardScreen(
+                                    navController = navController,
+                                    loginViewModel = loginViewModel,   // 👈 SE AGREGA
+                                    isLoggedIn = isLoggedIn,
+                                    usuario = usuarioLogin,      // ✔ se lo enviamos
+                                    onLoginSuccess = {
+                                        loginViewModel.getUser()
+                                        navController.navigate(NavRoutes.Dashboard.route) {
+                                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                            launchSingleTop = true
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable(NavRoutes.PublicDashboard.route) {
+                                PublicDashboardScreen(
                                     navController = navController,
                                     loginViewModel = loginViewModel,   // 👈 SE AGREGA
                                     isLoggedIn = isLoggedIn,

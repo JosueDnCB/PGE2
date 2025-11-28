@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pge.data.network.analisisprediccion.PrediccionApiService
-import com.example.pge.data.network.analisisprediccion.RetrofitInstanceFastApi
+import com.example.pge.data.network.RetrofitInstanceFastApi
 import com.example.pge.models.Dependencia
 import com.example.pge.models.analisisprediccion.AnalisisIaContent
 import com.example.pge.models.analisisprediccion.ProyeccionResponse

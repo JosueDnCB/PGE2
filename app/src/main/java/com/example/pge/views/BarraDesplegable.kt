@@ -35,7 +35,7 @@ fun DrawerScreen(navController: NavController,
     // Lista de opciones para usuarios NO conectados
     val loggedOutItems = listOf(
         BottomNavItem(Icons.Default.Home, NavRoutes.Principal.route),
-        BottomNavItem(Icons.Default.Dashboard, NavRoutes.Dashboard.route),
+        BottomNavItem(Icons.Default.Dashboard, NavRoutes.PublicDashboard.route),
         BottomNavItem(Icons.Default.Visibility, NavRoutes.Transparencia.route)
     )
     val  loggedInItems = listOf(

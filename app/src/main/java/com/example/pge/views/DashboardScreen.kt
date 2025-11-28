@@ -29,6 +29,7 @@ import com.example.pge.viewmodels.DashboardUiState
 import com.example.pge.viewmodels.DashboardViewModel
 import com.example.pge.viewmodels.DependenciasViewModel
 import com.example.pge.viewmodels.LoginViewModel
+import com.example.pge.views.Dashboard.EvolutionChartCard
 import java.text.NumberFormat
 import java.util.*
 
@@ -205,15 +206,19 @@ fun DashboardContent(
             )
         }
 
-        // 4. Gráfica
+        // 4. Gráfica de Evolución
         item {
-            // Pasamos los datos reales para pintar las barras dinámicamente (simplificado)
-            EvolutionChartCard(data.data_evolucion.map { it.total_consumo.toFloat() })
+
+            EvolutionChartCard(
+                dataPoints = data.data_evolucion
+            )
         }
 
         // 5. Top Inmuebles
         item {
-            TopConsumptionCard(inmuebles = data.data_inmuebles)
+            TopConsumptionCard(
+                inmuebles = data.data_inmuebles
+            )
         }
     }
 }
@@ -284,6 +289,8 @@ fun BudgetCard(title: String, usedAmount: Float, totalAmount: Float) {
     }
 }
 
+
+/*
 @Composable
 fun EvolutionChartCard(dataPoints: List<Float>) {
     val maxVal = dataPoints.maxOrNull() ?: 1f
@@ -320,7 +327,7 @@ fun EvolutionChartCard(dataPoints: List<Float>) {
             }
         }
     }
-}
+}*/
 
 @Composable
 fun TopConsumptionCard(inmuebles: List<InmuebleItem>) {

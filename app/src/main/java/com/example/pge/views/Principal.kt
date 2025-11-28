@@ -1,6 +1,5 @@
 package com.example.pge.views
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -87,7 +86,7 @@ fun PgeHomeScreen(
             item {
                 HeroSection(
                     onExploreClick = {
-                        navController.navigate(NavRoutes.Dashboard.route) {
+                        navController.navigate(NavRoutes.PublicDashboard.route) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                             launchSingleTop = true
                         }
