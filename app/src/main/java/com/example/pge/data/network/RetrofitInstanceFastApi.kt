@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstanceFastApi {
 
     // URL para emulador // PC puerto 8001
-   const val BASE_URL_FASTAPI = "http://192.168.1.65:8001"
+   const val BASE_URL_FASTAPI = "http://10.0.2.2:8001"
 
     fun getRetrofit(context: Context): Retrofit {
 
