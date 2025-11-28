@@ -10,9 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.pge.models.Presupuesto.Presupuesto
@@ -32,7 +28,7 @@ import com.example.pge.models.UserResponse
 import com.example.pge.ui.theme.GrayTableTop
 import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.viewmodels.LoginViewModel
-import com.example.pge.viewmodels.PresupuestoViewModel // Importar el VM nuevo
+import com.example.pge.viewmodels.PresupuestoViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -91,7 +87,7 @@ fun PresupuestoScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
 
-            // --- SECCIÓN DE FILTROS SUPERIORES ---
+            // SECCIÓN DE FILTROS SUPERIORES
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -108,7 +104,7 @@ fun PresupuestoScreen(
                             fontWeight = FontWeight.Bold
                         )
 
-                        // 1. Selector de Dependencia (Solo si hay > 1)
+                        // Selector de Dependencia (Solo si hay > 1)
                         if (listaDependencias.size > 1) {
                             FiltroDropdownGenerico(
                                 label = "Dependencia",
@@ -128,7 +124,7 @@ fun PresupuestoScreen(
                             )
                         }
 
-                        // 2. Selector de Año
+                        //  Selector de Año
                         FiltroDropdownGenerico(
                             label = "Año Fiscal",
                             options = viewModel.aniosDisponibles,
@@ -167,7 +163,7 @@ fun PresupuestoScreen(
     }
 }
 
-// --- COMPONENTES AUXILIARES ACTUALIZADOS ---
+// COMPONENTES AUXILIARES ACTUALIZADOS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -316,12 +312,12 @@ fun PresupuestoItemRow(item: Presupuesto, nombreDependencia: String) {
                         color = Color.Blue
                     )
                 },
-                // CORRECCIÓN: Usar BorderStroke directamente
+                // Usar BorderStroke directamente
                 border = BorderStroke(
                     width = 1.dp,
                     color = Color.Blue.copy(alpha = 0.2f)
                 ),
-                // Opcional: Si quieres quitar el fondo grisáceo por defecto
+
                 colors = AssistChipDefaults.assistChipColors(
                     containerColor = Color.Transparent
                 )
@@ -342,9 +338,8 @@ fun PresupuestoItemRow(item: Presupuesto, nombreDependencia: String) {
 
 }
 
-// Componente: Tarjeta de Resumen Reutilizable
-// Componente: Título y Botón "Asignar"
 
+// Título y Botón "Asignar"
 @Composable
 fun TitleAndButtonRow(
 
@@ -392,7 +387,7 @@ fun TitleAndButtonRow(
 
             onClick = {
 
-// PASO 3: Llama a la función del parámetro
+            // Llama a la función del parámetro
 
                 onAsignarClick()
 
@@ -459,7 +454,7 @@ fun SummaryCard(
     }
 }
 
-// Componente: Encabezados de la Lista ---
+// Encabezados de la Lista
 
 @Composable
 fun PresupuestoListHeader() {

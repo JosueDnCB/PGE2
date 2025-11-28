@@ -2,7 +2,6 @@ package com.example.pge.views.AnalisisPrediccion
 
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,22 +9,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.font.Typeface
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pge.models.analisisprediccion.DatoGrafica
-import kotlin.math.abs
+
 
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.roundToInt
 
 @Composable
 fun GraficaProyeccionInteractiva(
@@ -57,7 +54,10 @@ fun GraficaProyeccionInteractiva(
             color = android.graphics.Color.GRAY
             textSize = density.run { 10.sp.toPx() }
             textAlign = Paint.Align.CENTER
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            // Usa la ruta completa:
+            // android.graphics.Typeface
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+
         }
     }
 
@@ -82,9 +82,9 @@ fun GraficaProyeccionInteractiva(
                 return height - ((valor.toFloat() / maxValor) * height)
             }
 
-            // =========================================================
-            // 1. DIBUJAR RANGO (SOMBRA VERDE)
-            // =========================================================
+
+            // DIBUJAR RANGO (SOMBRA VERDE)
+
             val pathRango = Path()
             val predicciones = datos.filter { it.tipo == "prediccion" && it.rangoMin != null && it.rangoMax != null }
 
@@ -108,9 +108,9 @@ fun GraficaProyeccionInteractiva(
                 drawPath(pathRango, colorRango)
             }
 
-            // =========================================================
-            // 2. DIBUJAR LÍNEAS (CONECTADAS)
-            // =========================================================
+
+            // DIBUJAR LÍNEAS (CONECTADAS)
+
             val pathReal = Path()
             val pathPred = Path()
 
@@ -153,9 +153,9 @@ fun GraficaProyeccionInteractiva(
                 )
             )
 
-            // =========================================================
-            // 3. PUNTOS Y EJE X
-            // =========================================================
+
+            // PUNTOS Y EJE X
+
             datos.forEachIndexed { i, d ->
                 val x = i * stepX
                 val y = getY(d.totalCosto)
@@ -177,9 +177,9 @@ fun GraficaProyeccionInteractiva(
                 }
             }
 
-            // =========================================================
-            // 4. SELECCIÓN
-            // =========================================================
+
+            // SELECCIÓN
+
             puntoSeleccionado?.let { sel ->
                 val index = datos.indexOf(sel)
                 val x = index * stepX
