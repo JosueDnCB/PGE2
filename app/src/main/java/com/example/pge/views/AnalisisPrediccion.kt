@@ -31,7 +31,9 @@ import com.example.pge.viewmodels.AnalisisViewModel
 import com.example.pge.viewmodels.IaUiState
 import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractiva
 import com.example.pge.viewmodels.DependenciasViewModel
-
+import com.example.pge.views.AnalisisPrediccion.GraficaProyeccionInteractivaKwh
+import java.text.NumberFormat
+import java.util.Locale
 
 
 @Composable
@@ -65,19 +67,25 @@ fun AnalisisDashboardScreen(navController: NavController, isLoggedIn: Boolean, u
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // 1. Título Principal
+            // Título Principal
             item {
                 TituloPrincipal()
             }
 
-            // 2. Tarjeta de Filtros
+            // Tarjeta de Filtros
             item {
                 FiltrosCard(viewModel = viewModel, viewModelDependencias = viewModelDespendencias)
             }
-
-            // 3. Tarjeta de Predicción de Gasto
+             /*
+            // Tarjeta de Predicción de Gasto
             item {
                 PrediccionGastoCard(viewModel = viewModel)
+            }*/
+            // Tarjeta de Predicción de consumo energetico
+            item {
+
+                PrediccionConsumooCard(viewModel = viewModel)
+
             }
             // 4. Tarjeta de Análisis Estratégico
             item {
@@ -303,6 +311,123 @@ fun DropdownFiltro(
                     }
 
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun PrediccionConsumooCard(
+    viewModel: AnalisisViewModel
+) {
+    // Recolectamos el estado del ViewModel que nos pasaron
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Formateador para kWh
+    val numberFormat = NumberFormat.getNumberInstance(Locale("es", "MX")).apply {
+        maximumFractionDigits = 0
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Cabecera con Icono
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Psychology,
+                    contentDescription = "IA",
+                    tint = Color(0xFF6200EA) // Morado IA
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Proyección Energética (IA)",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Título actualizado para kWh
+            Text(
+                text = "Predicción de Consumo (kWh)",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.DarkGray
+            )
+
+            // Contenido dinámico según estado
+            when (val state = uiState) {
+                // Cargando
+                is AnalisisUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+                // Mensaje de error
+                is AnalisisUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Error: ${state.message}", color = Color.Red)
+                    }
+                }
+                // Se dibuja la gráfica
+                is AnalisisUiState.Success -> {
+                    val datos = state.data.datosGrafica
+                    val resumen = state.data.resumen
+
+                    // Calculamos el total de kWh proyectados sumando la lista (por si no está en el resumen)
+                    val totalKwhProyectado = datos
+                        .filter { it.tipo == "prediccion" }
+                        .sumOf { it.totalKwh }
+
+                    // AQUI LLAMAMOS A LA GRÁFICA EXCLUSIVA DE KWH
+                    GraficaProyeccionInteractivaKwh(
+                        datos = datos,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(320.dp) // Altura ajustada
+                            .padding(vertical = 8.dp)
+                    )
+
+                    // Leyenda dinámica basada en datos reales (Enfoque energético)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Color(0xFFE8F5E9),
+                                RoundedCornerShape(8.dp)
+                            ) // Fondo verde muy suave
+                            .padding(12.dp)
+                    ) {
+                        Text(
+                            text = "Interpretación (${resumen.tendencia}):",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1B5E20)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Se proyecta un consumo total de ${
+                                numberFormat.format(
+                                    totalKwhProyectado
+                                )
+                            } kWh en los próximos ${resumen.horizonteMeses} meses. " +
+                                    "Esta estimación se basa en el comportamiento histórico reciente.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.DarkGray
+                        )
+                    }
+                }
             }
         }
     }
