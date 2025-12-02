@@ -5,17 +5,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.DriveFolderUpload
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material3.Button
@@ -25,7 +22,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults.contentPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,15 +36,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.pge.data.network.ConsumoMasivoApi
 import com.example.pge.data.network.RetrofitInstance
 import com.example.pge.data.respositorios.ConsumoRepositorio
 import com.example.pge.models.UserResponse
-import com.example.pge.navigation.NavRoutes
 import com.example.pge.ui.theme.PgeGreenButton
 import com.example.pge.viewmodels.LoginViewModel
 import kotlinx.coroutines.launch
@@ -73,26 +66,24 @@ fun CargaConsumosScreen(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
             if (uri != null) {
-
                 scope.launch {
-
                     try {
                         val multipart = consumoRepo.uriToMultipart(context, uri)
 
-                        val api = RetrofitInstance.getRetrofit(context).create(ConsumoMasivoApi::class.java)
+                        val api = RetrofitInstance.getRetrofit(context)
+                            .create(ConsumoMasivoApi::class.java)
+
                         val response = api.cargarArchivo(multipart)
 
                         if (response.isSuccessful) {
                             println("OK: ${response.body()?.message}")
                         } else {
-                            val raw = response.errorBody()?.string()
-                            println("Error API: $raw")
+                            println("Error API: ${response.errorBody()?.string()}")
                         }
 
                     } catch (e: Exception) {
                         println("ERROR SUBIENDO ARCHIVO: ${e.message}")
                     }
-
                 }
             }
         }
@@ -105,9 +96,7 @@ fun CargaConsumosScreen(
                 isLoggedIn = isLoggedIn,
                 titulo = "Carga de Consumos",
                 usuarios = usuario,
-                onShowLoginClick = {
-                    onLoginSuccess() // si quieres disparar la acción de login
-                }
+                onShowLoginClick = { onLoginSuccess() }
             )
         },
         containerColor = Color(0xFFF8FAFC)
@@ -120,18 +109,13 @@ fun CargaConsumosScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Carga de Consumos",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = "Carga de Consumos",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             item {
@@ -148,7 +132,7 @@ fun CargaConsumosScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Text(
-                        text = "Sube tu archivo de consumos en formato .CSV o .XSLX. Asegurarse de que las columnas coincidan con la plantilla.",
+                        text = "Sube tu archivo de consumos en formato .CSV o .XLSX. Asegúrate de que las columnas coincidan con la plantilla.",
                         modifier = Modifier.padding(16.dp),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodySmall
@@ -177,6 +161,7 @@ fun CargaConsumosScreen(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(50.dp)
                         )
+
                         Text(
                             text = "Sube tu archivo de consumo energético",
                             style = MaterialTheme.typography.titleMedium,
@@ -184,13 +169,11 @@ fun CargaConsumosScreen(
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center
                         )
+
                         Button(
                             onClick = {
                                 filePickerLauncher.launch(
-                                    arrayOf(
-                                        "text/csv",
-                                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                    )
+                                    arrayOf("*/*") // ← Esto SI permite seleccionar CSV y Excel
                                 )
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PgeGreenButton)
