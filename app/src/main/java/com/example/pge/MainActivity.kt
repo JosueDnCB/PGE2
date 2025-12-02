@@ -74,6 +74,8 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize()
                                 .swipeToNavigate(navController, isLoggedIn) // <--- AGREGAR ESTO
+                                .padding(innerPadding)
+
                         ) {
 
                             NavHost(
